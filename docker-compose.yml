@@ -1,0 +1,64 @@
+# ============================================
+# FaOnSisT - Docker Compose (Production)
+# ============================================
+
+services:
+  # -----------------------------------------
+  # PostgreSQL 17
+  # -----------------------------------------
+  db:
+    image: postgres:17-alpine
+    container_name: faonsist-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-faonsist}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-faonsist_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-faonsist}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-faonsist} -d ${POSTGRES_DB:-faonsist}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # -----------------------------------------
+  # FaOnSisT Next.js App
+  # -----------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: faonsist-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-faonsist}:${POSTGRES_PASSWORD:-faonsist_secret}@db:5432/${POSTGRES_DB:-faonsist}?schema=public
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  pgdata:
+    driver: local
+  uploads:
+    driver: local
+  logs:
+    driver: local

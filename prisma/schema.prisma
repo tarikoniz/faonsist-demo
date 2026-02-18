@@ -1,0 +1,1312 @@
+// ============================================
+// FaOnSisT - Database Schema
+// PostgreSQL + Prisma ORM
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================
+// AUTH & USERS
+// =============================================
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  password     String   // bcrypt hash
+  role         String   @default("employee") // admin, manager, project_manager, sales_manager, accountant, warehouse_manager, employee, viewer
+  permissions  String?  // custom permission description
+  avatar       String?
+  department   String?
+  active       Boolean  @default(true)
+  lastSeenAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  activities      Activity[]
+  messages        Message[]
+  channelMembers  ChannelMember[]
+  notifications   Notification[]
+  fileUploads     FileUpload[]
+  purchaseRequests PurchaseRequest[]  @relation("RequesterRelation")
+  approvedRequests PurchaseRequest[]  @relation("ApproverRelation")
+  meetingsCreated  Meeting[]          @relation("MeetingCreator")
+  passwordResets   PasswordReset[]
+
+  @@index([role])
+  @@index([active])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  family    String?  // Token rotation ailesi — replay saldırı tespiti
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([family])
+  @@map("refresh_tokens")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_resets")
+}
+
+// =============================================
+// PROJECTS (FaOn-Build)
+// =============================================
+
+model Project {
+  id           String   @id @default(uuid())
+  legacyId     Int?     @unique // HTML demo'dan gelen eski ID
+  ad           String   // proje adi
+  kod          String?  // proje kodu
+  konum        String?
+  basTarihi    String?
+  bitTarihi    String?
+  butce        Float    @default(0)
+  harcanan     Float    @default(0)
+  durum        String   @default("devam") // devam, tamamlandi, beklemede, iptal
+  ilerleme     Int      @default(0) // 0-100
+  isverenAdi   String?
+  isverenTel   String?
+  isverenEposta String?
+  mudurAdi     String?
+  mudurTel     String?
+  aciklama     String?
+  deletedAt    DateTime?  // Soft delete
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Sub-entities (15 alt tablo)
+  subcontractors    Subcontractor[]
+  workItems         WorkItem[]
+  progressClaims    ProgressClaim[]
+  dailyLogs         DailyLog[]
+  greenBookEntries  GreenBookEntry[]
+  contracts         Contract[]
+  materials         ProjectMaterial[]
+  cashFlows         CashFlow[]
+  safetyRecords     SafetyRecord[]
+  qualityRecords    QualityRecord[]
+  correspondence    Correspondence[]
+  scheduleItems     ScheduleItem[]
+  equipment         ProjectEquipment[]
+  tasks             ProjectTask[]
+  photos            ProjectPhoto[]
+
+  @@index([durum])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+model Subcontractor {
+  id         String  @id @default(uuid())
+  legacyId   Int?
+  projectId  String
+  firma      String
+  isKalemi   String?
+  sozlesmeNo String?
+  tutar      Float   @default(0)
+  odenen     Float   @default(0)
+  durum      String  @default("aktif")
+  basTarihi  String?
+  bitTarihi  String?
+  iletisim   String?
+  telefon    String?
+  notlar     String?
+  createdAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("subcontractors")
+}
+
+model WorkItem {
+  id          String  @id @default(uuid())
+  legacyId    Int?
+  projectId   String
+  pozNo       String?
+  tanim       String
+  birim       String?
+  miktar      Float   @default(0)
+  birimFiyat  Float   @default(0)
+  toplamTutar Float   @default(0)
+  yapilan     Float   @default(0)
+  kategori    String?
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("work_items")
+}
+
+model ProgressClaim {
+  id           String  @id @default(uuid())
+  legacyId     Int?
+  projectId    String
+  no           Int     @default(0)
+  donem        String?
+  tutar        Float   @default(0)
+  kesinti      Float   @default(0)
+  netTutar     Float   @default(0)
+  durum        String  @default("hazirlaniyor") // hazirlaniyor, sunuldu, onaylandi, odendi
+  tarih        String?
+  aciklama     String?
+  createdAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("progress_claims")
+}
+
+model DailyLog {
+  id            String  @id @default(uuid())
+  legacyId      Int?
+  projectId     String
+  tarih         String
+  havaDurumu    String?
+  sicaklik      String?
+  personelSayisi Int    @default(0)
+  ekipmanlar    String?
+  yapilanIsler  String?
+  sorunlar      String?
+  notlar        String?
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("daily_logs")
+}
+
+model GreenBookEntry {
+  id          String  @id @default(uuid())
+  legacyId    Int?
+  projectId   String
+  tarih       String?
+  aciklama    String
+  miktar      Float   @default(0)
+  birim       String?
+  birimFiyat  Float   @default(0)
+  toplamTutar Float   @default(0)
+  onayDurumu  String  @default("beklemede")
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("green_book_entries")
+}
+
+model Contract {
+  id            String  @id @default(uuid())
+  legacyId      Int?
+  projectId     String
+  baslik        String
+  tur           String? // ana sozlesme, ek sozlesme, alt sozlesme
+  taraflar      String?
+  tutar         Float   @default(0)
+  basTarihi     String?
+  bitTarihi     String?
+  durum         String  @default("aktif")
+  dosyaUrl      String?
+  aciklama      String?
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("contracts")
+}
+
+model ProjectMaterial {
+  id          String  @id @default(uuid())
+  legacyId    Int?
+  projectId   String
+  malzemeAdi  String
+  birim       String?
+  miktar      Float   @default(0)
+  birimFiyat  Float   @default(0)
+  toplamTutar Float   @default(0)
+  tedarikci   String?
+  durum       String  @default("beklemede")
+  siparisTarihi String?
+  teslimTarihi  String?
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_materials")
+}
+
+model CashFlow {
+  id          String  @id @default(uuid())
+  legacyId    Int?
+  projectId   String
+  tarih       String
+  aciklama    String
+  tur         String  // gelir, gider
+  kategori    String?
+  tutar       Float   @default(0)
+  durum       String  @default("planlanan")
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("cash_flows")
+}
+
+model SafetyRecord {
+  id            String  @id @default(uuid())
+  legacyId      Int?
+  projectId     String
+  tarih         String
+  tur           String  // kaza, raporlama, egitim, denetim
+  aciklama      String
+  oncelik       String  @default("normal")
+  durum         String  @default("acik")
+  sorumlu       String?
+  ekNot         String?
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("safety_records")
+}
+
+model QualityRecord {
+  id            String  @id @default(uuid())
+  legacyId      Int?
+  projectId     String
+  tarih         String
+  tur           String  // denetim, test, onay
+  aciklama      String
+  sonuc         String  @default("beklemede") // uygun, uygunsuz, beklemede
+  sorumlu       String?
+  ekNot         String?
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("quality_records")
+}
+
+model Correspondence {
+  id            String  @id @default(uuid())
+  legacyId      Int?
+  projectId     String
+  tarih         String
+  tur           String  // gelen, giden
+  gonderenAlici String?
+  konu          String
+  icerik        String?
+  dosyaUrl      String?
+  dosyaAdi      String?
+  referansNo    String?
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("correspondence")
+}
+
+model ScheduleItem {
+  id          String  @id @default(uuid())
+  legacyId    Int?
+  projectId   String
+  isAdi       String
+  basTarihi   String?
+  bitTarihi   String?
+  sure        Int     @default(0) // gun
+  ilerleme    Int     @default(0)
+  sorumlu     String?
+  bagimlilik  String? // digerine bagimli is ID
+  durum       String  @default("planlanmis")
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("schedule_items")
+}
+
+model ProjectEquipment {
+  id          String  @id @default(uuid())
+  legacyId    Int?
+  projectId   String
+  ekipmanAdi  String
+  tur         String?
+  plaka       String?
+  durum       String  @default("aktif")
+  gunlukUcret Float   @default(0)
+  operatorAdi String?
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_equipment")
+}
+
+model ProjectTask {
+  id           String  @id @default(uuid())
+  legacyId     Int?
+  projectId    String
+  baslik       String
+  aciklama     String?
+  atananKisi   String?
+  oncelik      String  @default("normal")
+  durum        String  @default("yapilacak") // yapilacak, devam, tamamlandi
+  sonTarih     String?
+  tamamlanma   Int     @default(0)
+  createdAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_tasks")
+}
+
+model ProjectPhoto {
+  id          String  @id @default(uuid())
+  legacyId    Int?
+  projectId   String
+  baslik      String?
+  aciklama    String?
+  dosyaUrl    String?
+  thumbnail   String?
+  tarih       String?
+  kategori    String?
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_photos")
+}
+
+// =============================================
+// TENDERS (Ihaleler - FaOn-Supply)
+// =============================================
+
+model Tender {
+  id              String   @id @default(uuid())
+  legacyId        Int?     @unique
+  baslik          String?
+  item            String?  // ihale kalemi
+  tip             String   @default("acik") // acik, kapaliZarf, dogrudan, pazarlik
+  amount          Float    @default(0)
+  toplamTutar     Float    @default(0)
+  supplier        String?
+  delivery        Int      @default(0) // gun
+  rating          Int      @default(0)
+  status          String   @default("pending") // pending, reviewing, completed, cancelled
+  kazananTeklifId String?
+  komisyonNotu    String?
+  deletedAt       DateTime?  // Soft delete
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items     TenderItem[]
+  bids      TenderBid[]
+  requests  TenderRequestLink[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("tenders")
+}
+
+model TenderItem {
+  id          String  @id @default(uuid())
+  tenderId    String
+  kalemAdi    String
+  miktar      Float   @default(0)
+  birim       String?
+  aciklama    String?
+
+  tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@map("tender_items")
+}
+
+model TenderBid {
+  id            String  @id @default(uuid())
+  legacyId      Int?
+  tenderId      String
+  firma         String
+  yetkili       String?
+  telefon       String?
+  email         String?
+  teklifTarihi  String?
+  gecerlilikGun Int     @default(30)
+  toplamFiyat   Float   @default(0)
+  teslimatGun   Int     @default(0)
+  odemeSartlari String?
+  garanti       String?
+  aciklama      String?
+  puan          Int     @default(0)
+  durum         String  @default("degerlendirildi") // degerlendirildi, kazandi, elenmiş
+  kalemler      Json?   // bid item details
+  createdAt     DateTime @default(now())
+
+  tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@map("tender_bids")
+}
+
+model TenderRequestLink {
+  id         String @id @default(uuid())
+  tenderId   String
+  requestId  String
+
+  tender Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+
+  @@map("tender_request_links")
+}
+
+// =============================================
+// PURCHASE REQUESTS (Satinalma Talepleri)
+// =============================================
+
+model PurchaseRequest {
+  id           String   @id @default(uuid())
+  legacyId     Int?     @unique
+  talepNo      String?
+  baslik       String
+  aciklama     String?
+  taleptEden   String?
+  departman    String?
+  oncelik      String   @default("normal") // acil, yuksek, normal, dusuk
+  durum        String   @default("beklemede") // beklemede, onaylandi, reddedildi, ihaleye_cevridi, siparis_olusturuldu
+  tapinanTutar Float    @default(0)
+  onaylayanId  String?
+  onayTarihi   String?
+  redNedeni    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  requesterId  String?
+  approverId   String?
+  requester    User?    @relation("RequesterRelation", fields: [requesterId], references: [id])
+  approver     User?    @relation("ApproverRelation", fields: [approverId], references: [id])
+
+  items PurchaseRequestItem[]
+
+  @@map("purchase_requests")
+}
+
+model PurchaseRequestItem {
+  id           String  @id @default(uuid())
+  requestId    String
+  malzemeAdi   String
+  miktar       Float   @default(0)
+  birim        String?
+  tapinanFiyat Float   @default(0)
+  aciklama     String?
+
+  request PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_request_items")
+}
+
+// =============================================
+// ORDERS & DELIVERIES (Siparisler)
+// =============================================
+
+model Order {
+  id            String   @id @default(uuid())
+  legacyId      Int?     @unique
+  siparisNo     String?
+  tedarikci     String
+  kalemler      Json?    // order items
+  toplamTutar   Float    @default(0)
+  durum         String   @default("olusturuldu") // olusturuldu, gonderildi, kismiTeslimat, tamamlandi, iptal
+  siparisTarihi String?
+  beklenenTarih String?
+  odemeDurumu   String   @default("odenmedi")
+  notlar        String?
+  ihaleId       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  deliveries Delivery[]
+
+  @@map("orders")
+}
+
+model Delivery {
+  id            String   @id @default(uuid())
+  legacyId      Int?
+  orderId       String
+  teslimTarihi  String
+  teslimAlan    String?
+  kalemler      Json?    // delivered items
+  notlar        String?
+  belgeler      Json?
+  createdAt     DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("deliveries")
+}
+
+// =============================================
+// SUPPLIER POOL (Tedarikci Havuzu)
+// =============================================
+
+model Supplier {
+  id            String   @id @default(uuid())
+  legacyId      Int?     @unique
+  firma         String
+  yetkili       String?
+  telefon       String?
+  email         String?
+  adres         String?
+  vergiNo       String?
+  kategori      String?
+  altKategori   String?
+  puan          Int      @default(0) // 0-5
+  notlar        String?
+  aktif         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("suppliers")
+}
+
+// =============================================
+// SALES (FaOn-Sales / CRM)
+// =============================================
+
+model Sale {
+  id           String   @id @default(uuid())
+  legacyId     Int?     @unique
+  customer     String
+  phone        String?
+  product      String?
+  price        Float    @default(0)
+  installments Int      @default(1)
+  paid         Float    @default(0)
+  stage        String   @default("lead") // lead, meeting, proposal, negotiation, contract
+  status       String   @default("active") // active, won, lost
+  deletedAt    DateTime?  // Soft delete
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([stage])
+  @@index([status])
+  @@index([createdAt])
+  @@map("sales")
+}
+
+// =============================================
+// CHANNELS & MESSAGES (FaOn-Connect)
+// =============================================
+
+model Channel {
+  id          String   @id @default(uuid())
+  legacyId    String?  @unique // 'genel', 'proje-takip', etc.
+  name        String
+  type        String   @default("channel") // channel, direct
+  deletedAt   DateTime?  // Soft delete
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     ChannelMember[]
+  messages    Message[]
+  files       ChannelFile[]
+
+  @@map("channels")
+}
+
+model ChannelMember {
+  id        String   @id @default(uuid())
+  channelId String
+  userId    String
+  role      String   @default("member") // admin, member
+  joinedAt  DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@map("channel_members")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  legacyId  Int?
+  channelId String
+  userId    String
+  text      String
+  time      String?
+  mine      Boolean  @default(false) // will be computed on frontend
+  createdAt DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@index([userId])
+  @@map("messages")
+}
+
+model ChannelFile {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  channelId   String
+  name        String
+  type        String?  // PDF, XLSX, DWG, etc.
+  size        String?
+  desc        String?
+  uploadedBy  String?
+  uploadedAt  String?
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@map("channel_files")
+}
+
+// =============================================
+// KNOWLEDGE BASE (Bilgi Bankasi)
+// =============================================
+
+model KnowledgeBaseItem {
+  id        String   @id @default(uuid())
+  legacyId  Int?
+  title     String
+  category  String?
+  fileType  String?
+  desc      String?
+  addedBy   String?
+  addedAt   String?
+  source    String?
+  fileUrl   String?
+  createdAt DateTime @default(now())
+
+  @@map("knowledge_base")
+}
+
+// =============================================
+// WAREHOUSE & INVENTORY (FaOn-Depo)
+// =============================================
+
+model Warehouse {
+  id          String   @id @default(uuid())
+  legacyId    Int?     @unique
+  ad          String
+  konum       String?
+  sorumlu     String?
+  telefon     String?
+  kapasite    String?
+  tip         String?  // ana depo, saha deposu, soğuk hava
+  durum       String   @default("aktif")
+  aciklama    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items       InventoryItem[]
+  movements   WarehouseMovement[]
+  counts      WarehouseCount[]
+
+  @@map("warehouses")
+}
+
+model InventoryItem {
+  id           String   @id @default(uuid())
+  legacyId     Int?     @unique
+  warehouseId  String
+  ad           String
+  kod          String?
+  kategori     String?
+  birim        String?
+  miktar       Float    @default(0)
+  minStok      Float    @default(0)
+  maxStok      Float?
+  birimFiyat   Float    @default(0)
+  konum        String?  // raf/bolum
+  barkod       String?
+  durum        String   @default("aktif")
+  sonSayimTarihi String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@map("inventory_items")
+}
+
+model WarehouseMovement {
+  id           String   @id @default(uuid())
+  legacyId     Int?
+  warehouseId  String
+  tur          String   // giris, cikis, transfer, sayim_duzeltme
+  malzemeAdi   String?
+  malzemeId    String?
+  miktar       Float    @default(0)
+  birim        String?
+  aciklama     String?
+  islemYapan   String?
+  hedefDepo    String?
+  kaynakDepo   String?
+  tarih        String?
+  createdAt    DateTime @default(now())
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@map("warehouse_movements")
+}
+
+model WarehouseCount {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  warehouseId String
+  tarih       String
+  sayimNo     String?
+  durum       String   @default("devam") // devam, tamamlandi
+  kalemler    Json?    // count items detail
+  sayimYapan  String?
+  notlar      String?
+  createdAt   DateTime @default(now())
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@map("warehouse_counts")
+}
+
+// =============================================
+// ZIMMETLER (Asset Assignments)
+// =============================================
+
+model AssetAssignment {
+  id             String   @id @default(uuid())
+  legacyId       Int?
+  malzemeAdi     String
+  malzemeId      String?
+  zimmetliKisi   String
+  departman      String?
+  tarih          String?
+  durum          String   @default("aktif") // aktif, iade, kayip
+  notlar         String?
+  belgeNo        String?   // Toplu zimmet belge numarası (ZMT-2026-0001)
+  seriNo         String?   // Seri no / IMEI
+  birimDeger     Float     @default(0)
+  tcKimlikNo     String?   // Zimmet belgesi için personel TC
+  gorevi         String?   // Personel görevi
+  iseGirisTarihi String?   // İşe giriş tarihi
+  createdAt      DateTime @default(now())
+
+  @@index([belgeNo])
+  @@index([zimmetliKisi])
+  @@map("asset_assignments")
+}
+
+// =============================================
+// VEHICLES (Arac Filo Yonetimi)
+// =============================================
+
+model Vehicle {
+  id            String   @id @default(uuid())
+  legacyId      Int?     @unique
+  plaka         String
+  marka         String?
+  model         String?
+  yil           Int?
+  tur           String?  // binek, kamyon, kepce, vinca
+  yakit         String?  // dizel, benzin, lpg, elektrik
+  kmSayaci      Int      @default(0)
+  durum         String   @default("aktif") // aktif, bakimda, arizali, pasif
+  sofor         String?
+  departman     String?
+  sigortaBitis  String?
+  muayeneBitis  String?
+  kaskoVarMi    Boolean  @default(false)
+  kasko         String?
+  notlar        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  documents   VehicleDocument[]
+  maintenance VehicleMaintenance[]
+  fuel        VehicleFuel[]
+
+  @@map("vehicles")
+}
+
+model VehicleDocument {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  vehicleId   String
+  tur         String   // sigorta, muayene, ruhsat, ehliyet, kasko
+  belgeNo     String?
+  basTarihi   String?
+  bitTarihi   String?
+  dosyaUrl    String?
+  hatirlatma  Boolean  @default(true)
+  notlar      String?
+  createdAt   DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_documents")
+}
+
+model VehicleMaintenance {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  vehicleId   String
+  tarih       String
+  tur         String   // periyodik, ariza, kaza, lastik
+  aciklama    String?
+  km          Int      @default(0)
+  maliyet     Float    @default(0)
+  servis      String?
+  durum       String   @default("tamamlandi")
+  sonrakiKm   Int?
+  sonrakiTarih String?
+  createdAt   DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_maintenance")
+}
+
+model VehicleFuel {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  vehicleId   String
+  tarih       String
+  litre       Float    @default(0)
+  tutar       Float    @default(0)
+  km          Int      @default(0)
+  istasyon    String?
+  yakitTuru   String?
+  notlar      String?
+  createdAt   DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_fuel")
+}
+
+// =============================================
+// NOTIFICATIONS (Bildirimler)
+// =============================================
+
+model Notification {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  userId      String
+  baslik      String
+  mesaj       String?
+  tur         String   @default("bilgi") // bilgi, uyari, kritik, acil
+  kategori    String?  // arac-filo, envanter, genel
+  okundu      Boolean  @default(false)
+  link        String?
+  entityType  String?
+  entityId    String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, okundu])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// =============================================
+// ACTIVITY LOG (Aktivite Kayitlari)
+// =============================================
+
+model Activity {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  userId      String?
+  action      String
+  detail      String?
+  entityType  String?
+  entityId    String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@map("activities")
+}
+
+// =============================================
+// FILE UPLOADS (Dosya Yuklemeleri)
+// =============================================
+
+model FileUpload {
+  id          String   @id @default(uuid())
+  userId      String?
+  originalName String
+  storedName  String
+  mimeType    String?
+  size        Int      @default(0)
+  path        String
+  entityType  String?  // project, vehicle, inventory, channel
+  entityId    String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("file_uploads")
+}
+
+// =============================================
+// NOTIFICATION SETTINGS (Bildirim Ayarlari)
+// =============================================
+
+model NotificationSettings {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  settings        Json    // full JSON of bildirimAyarlar
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("notification_settings")
+}
+
+// =============================================
+// WAREHOUSE CATEGORIES (Depo Kategorileri)
+// =============================================
+
+model WarehouseCategory {
+  id    String @id @default(uuid())
+  key   String @unique
+  ad    String
+  renk  String?
+
+  @@map("warehouse_categories")
+}
+
+// =============================================
+// MEETINGS (Toplantilar - FaOn-Connect)
+// =============================================
+
+model Meeting {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  startTime    DateTime
+  endTime      DateTime
+  channelId    String?
+  createdById  String
+  participants Json     @default("[]")
+  location     String?
+  status       String   @default("scheduled")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdBy    User     @relation("MeetingCreator", fields: [createdById], references: [id])
+
+  @@map("meetings")
+}
+
+// =============================================
+// MESSAGE REACTIONS & READ RECEIPTS (ADIM 8)
+// =============================================
+
+model MessageReadReceipt {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@map("message_read_receipts")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@map("message_reactions")
+}
+
+// =============================================
+// SYSTEM LOGS (Sistem Kayitlari)
+// =============================================
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  level     String   // error, warn, info, debug
+  message   String
+  module    String?
+  requestId String?
+  userId    String?
+  stack     String?  @db.Text
+  meta      String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([level])
+  @@index([createdAt])
+  @@index([module])
+  @@map("system_logs")
+}
+
+// =============================================
+// AI INTERACTIONS (AI Etkilesimleri)
+// =============================================
+
+model AiInteraction {
+  id             String   @id @default(uuid())
+  userId         String
+  userMessage    String   @db.Text
+  aiResponse     String?  @db.Text
+  model          String?
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  responseTimeMs Int      @default(0)
+  usedFallback   Boolean  @default(false)
+  error          String?
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_interactions")
+}
+
+// =============================================
+// AI LEARNED RESPONSES (AI Ogrenme Onbellegi)
+// Claude yanitlarindan ogrenen yerel AI cache
+// =============================================
+
+model AiLearnedResponse {
+  id             String   @id @default(uuid())
+  interactionId  String?
+  userMessage    String   @db.Text
+  aiResponse     String   @db.Text
+  keywords       String   @db.Text
+  intent         String?
+  module         String?
+  hitCount       Int      @default(0)
+  quality        Float    @default(1.0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([intent])
+  @@index([createdAt])
+  @@index([active])
+  @@map("ai_learned_responses")
+}
+
+// =============================================
+// AI CHAT SESSIONS (AI Sohbet Gecmisi)
+// Kullanicinin AI sohbet oturumlarini kaydeder
+// =============================================
+
+model AiChatSession {
+  id          String   @id @default(uuid())
+  userId      String
+  baslik      String
+  ozet        String?
+  mesajSayisi Int      @default(0)
+  aktif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages AiChatMessage[]
+
+  @@index([userId, updatedAt])
+  @@map("ai_chat_sessions")
+}
+
+model AiChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String
+  role      String   // "user" | "assistant"
+  icerik    String   @db.Text
+  provider  String?
+  model     String?
+  createdAt DateTime @default(now())
+
+  session AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("ai_chat_messages")
+}
+
+// =============================================
+// PUSH SUBSCRIPTIONS (Push Bildirim Abonelikleri)
+// Browser push notification abonelikleri
+// =============================================
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @db.Text
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// =============================================
+// AI REPORTS (AI Otomatik Raporlar)
+// AI tarafindan olusturulan analiz raporlari
+// =============================================
+
+model AiReport {
+  id        String   @id @default(uuid())
+  userId    String
+  baslik    String
+  tur       String   // proje_ozet, maliyet_analiz, nakit_akis, performans, risk
+  icerik    String   @db.Text
+  veriOzeti Json?
+  format    String?
+  dosyaYolu String?
+  durum     String   @default("olusturuluyor") // olusturuluyor, tamamlandi, hata
+  projectId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([durum])
+  @@map("ai_reports")
+}
+
+// =============================================
+// HR - EMPLOYEES (FaOn-HR Personel)
+// =============================================
+
+model Employee {
+  id               String   @id @default(uuid())
+  legacyId         Int?
+  userId           String?  @unique  // Opsiyonel login bağlantısı
+  ad               String
+  soyad            String
+  tcKimlikNo       String?  @unique
+  dogumTarihi      String?
+  cinsiyet         String?
+  medeniDurum      String?
+  telefonKisisel   String?
+  telefonIs        String?
+  emailKisisel     String?
+  emailIs          String?
+  adres            String?
+  sehir            String?
+  egitimDurumu     String?
+  okulAdi          String?
+  bolum            String?
+  departmanId      String?
+  gorevi           String?
+  iseGirisTarihi   String?
+  istenCikisTarihi String?
+  cikisSebebi      String?
+  sgkNo            String?
+  kanGrubu         String?
+  acilDurumKisi    String?
+  acilDurumTel     String?
+  maas             Float    @default(0)
+  calismaTipi      String   @default("tam_zamanli") // tam_zamanli, yari_zamanli, sozlesmeli, stajyer
+  durum            String   @default("aktif") // aktif, izinli, ayrilmis
+  notlar           String?
+  profilResmi      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  leaves           EmployeeLeave[]
+  documents        EmployeeDocument[]
+
+  @@index([departmanId])
+  @@index([durum])
+  @@index([createdAt])
+  @@map("employees")
+}
+
+// =============================================
+// HR - DEPARTMENTS (FaOn-HR Departmanlar)
+// =============================================
+
+model Department {
+  id         String   @id @default(uuid())
+  legacyId   Int?
+  ad         String
+  kod        String?  @unique
+  yoneticiId String?
+  aciklama   String?
+  aktif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@map("departments")
+}
+
+// =============================================
+// HR - EMPLOYEE LEAVES (Personel İzinleri)
+// =============================================
+
+model EmployeeLeave {
+  id          String   @id @default(uuid())
+  legacyId    Int?
+  employeeId  String
+  izinTuru    String   // yillik, hastalik, mazeret, dogum, ucretsiz, evlilik, olum
+  basTarihi   String
+  bitTarihi   String
+  gunSayisi   Float    @default(0)
+  durum       String   @default("beklemede") // beklemede, onaylandi, reddedildi, iptal
+  onaylayanId String?
+  aciklama    String?
+  createdAt   DateTime @default(now())
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([durum])
+  @@map("employee_leaves")
+}
+
+// =============================================
+// HR - EMPLOYEE DOCUMENTS (Personel Belgeleri)
+// =============================================
+
+model EmployeeDocument {
+  id               String   @id @default(uuid())
+  legacyId         Int?
+  employeeId       String
+  tur              String   // sozlesme, diploma, sertifika, saglik_raporu, ikametgah, nufus_cuzdani, ehliyet, diger
+  baslik           String
+  dosyaUrl         String?
+  gecerlilikTarihi String?
+  notlar           String?
+  createdAt        DateTime @default(now())
+
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("employee_documents")
+}
