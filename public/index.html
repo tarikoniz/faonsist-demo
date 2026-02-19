@@ -1801,6 +1801,8 @@
                     <button class="tab-btn" onclick="switchSettingsTab(&#39;kategoriler&#39;)">Kategoriler</button>
                     <button class="tab-btn" onclick="switchSettingsTab(&#39;bildirimler&#39;)">Bildirimler</button>
                     <button class="tab-btn" onclick="switchSettingsTab(&#39;belgeSablonlari&#39;)">Belge Sablonlari</button>
+                    <button class="tab-btn" onclick="switchSettingsTab(&#39;sirketProfili&#39;)">🏢 Şirket Profili</button>
+                    <button class="tab-btn" onclick="switchSettingsTab(&#39;formTasarimi&#39;)">🎨 Form Tasarımı</button>
                 </div>
                 <div id="settings-tab-users">
                     <div class="glass rounded-xl p-5">
@@ -1830,6 +1832,12 @@
                 </div>
                 <div id="settings-tab-belgeSablonlari" class="hidden">
                     <div class="glass rounded-xl p-5" id="belge-sablonlari-view"></div>
+                </div>
+                <div id="settings-tab-sirketProfili" class="hidden">
+                    <div class="glass rounded-xl p-5" id="sirket-profili-view"></div>
+                </div>
+                <div id="settings-tab-formTasarimi" class="hidden">
+                    <div class="glass rounded-xl p-5" id="form-tasarimi-view"></div>
                 </div>
             </div>
             <!-- FaOn-HR Module -->
@@ -3721,6 +3729,8 @@ const S = {
     araclar:[],
     mekanlar:[],
     demirbaslar:[],
+    sirket:{ad:'',kisaAd:'',logoUrl:'',adres:'',telefon:'',email:'',vergiDairesi:'',vergiNo:'',mersisNo:'',web:''},
+    formAyarlari:{renkTonu:'mavi',yazıTipi:'segoe',kagitBoyutu:'A4',imzaHane1:'Hazırlayan',imzaHane2:'Kontrol Eden',imzaHane3:'Onaylayan',zimmetImza1:'Teslim Eden',zimmetImza2:'Teslim Alan',logoGoster:true,adresGoster:true,vergiNoGoster:false},
     personeller:[],
     departmanlar:[
         {id:1,ad:'Santiye',kod:'STY',yoneticiId:null,aciklama:'Saha operasyonlari',aktif:true},
@@ -5538,12 +5548,14 @@ function renderSettings(){
 }
 
 function switchSettingsTab(tab){
-    ['users','roles','general','kategoriler','bildirimler','belgeSablonlari'].forEach(t=>{const el=document.getElementById('settings-tab-'+t);if(el)el.classList.toggle('hidden',t!==tab);});
-    document.querySelectorAll('#module-settings .tab-btn').forEach((b,i)=>b.classList.toggle('active',['users','roles','general','kategoriler','bildirimler','belgeSablonlari'][i]===tab));
+    ['users','roles','general','kategoriler','bildirimler','belgeSablonlari','sirketProfili','formTasarimi'].forEach(t=>{const el=document.getElementById('settings-tab-'+t);if(el)el.classList.toggle('hidden',t!==tab);});
+    document.querySelectorAll('#module-settings .tab-btn').forEach((b,i)=>b.classList.toggle('active',['users','roles','general','kategoriler','bildirimler','belgeSablonlari','sirketProfili','formTasarimi'][i]===tab));
     if(tab==='roles'){const rv=document.getElementById('roles-view');if(rv)renderRolesTab(rv);}
     if(tab==='kategoriler')renderKategoriAyarlari();
     if(tab==='bildirimler')renderBildirimAyarlari();
     if(tab==='belgeSablonlari')renderBelgeSablonlari();
+    if(tab==='sirketProfili')renderSirketProfili();
+    if(tab==='formTasarimi')renderFormTasarimi();
 }
 
 // ===================== v5 - ROLE MANAGEMENT =====================
@@ -7126,23 +7138,40 @@ setInterval(checkReminders,60000);
 
 // ===================== v5 - PRINT REPORT =====================
 function printReport(){
-    const w=window.open('','_blank');
     const projBudget=S.projects.reduce((s,p)=>s+p.budget,0);
     const tenderTotal=S.tenders.reduce((s,t)=>s+t.amount,0);
     const salesTotal=S.sales.reduce((s,x)=>s+x.price,0);
     const paidTotal=S.sales.reduce((s,x)=>s+x.paid,0);
-    w.document.write(`<!DOCTYPE html><html><head><title>FaOnSisT Rapor</title><style>body{font-family:Inter,sans-serif;padding:40px;color:#1e293b;}h1{font-size:24px;margin-bottom:8px;}h2{font-size:16px;margin-top:24px;border-bottom:2px solid #3b82f6;padding-bottom:4px;}table{width:100%;border-collapse:collapse;margin-top:12px;}th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:13px;}th{background:#f1f5f9;font-weight:600;}.header{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #3b82f6;padding-bottom:12px;margin-bottom:24px;}.logo{font-size:28px;font-weight:800;color:#3b82f6;}.meta{font-size:11px;color:#94a3b8;}.stat{display:inline-block;padding:8px 16px;margin:4px;border-radius:8px;background:#f1f5f9;}.stat b{display:block;font-size:18px;color:#3b82f6;}@media print{body{padding:20px;}}</style></head><body>`);
-    w.document.write(`<div class="header"><div><div class="logo">FaOnSisT</div><div class="meta">Enterprise Rapor - ${new Date().toLocaleDateString('tr-TR')}</div></div></div>`);
-    w.document.write(`<div style="display:flex;gap:12px;flex-wrap:wrap;"><div class="stat">Projeler<b>${S.projects.length}</b></div><div class="stat">Toplam Butce<b>\u20BA${fmtFull(projBudget)}</b></div><div class="stat">Ihaleler<b>${S.tenders.length}</b></div><div class="stat">Satislar<b>\u20BA${fmtFull(salesTotal)}</b></div><div class="stat">Tahsilat<b>\u20BA${fmtFull(paidTotal)}</b></div></div>`);
-    w.document.write(`<h2>Projeler</h2><table><tr><th>Proje</th><th>Butce</th><th>Harcanan</th><th>Tamamlanma</th><th>Durum</th></tr>`);
-    S.projects.forEach(p=>w.document.write(`<tr><td>${p.name}</td><td>\u20BA${fmtFull(p.budget)}</td><td>\u20BA${fmtFull(p.spent||0)}</td><td>%${p.completion}</td><td>${stName(p.status)}</td></tr>`));
-    w.document.write(`</table><h2>Ihaleler</h2><table><tr><th>Malzeme</th><th>Tedarikci</th><th>Tutar</th><th>Durum</th></tr>`);
-    S.tenders.forEach(t=>w.document.write(`<tr><td>${t.item}</td><td>${t.supplier}</td><td>\u20BA${fmtFull(t.amount)}</td><td>${stName(t.status)}</td></tr>`));
-    w.document.write(`</table><h2>Satislar</h2><table><tr><th>Musteri</th><th>Urun</th><th>Fiyat</th><th>Odenen</th><th>Asama</th></tr>`);
-    S.sales.forEach(s=>w.document.write(`<tr><td>${s.customer}</td><td>${s.product}</td><td>\u20BA${fmtFull(s.price)}</td><td>\u20BA${fmtFull(s.paid)}</td><td>${stName(s.stage)}</td></tr>`));
-    w.document.write(`</table><div style="margin-top:40px;text-align:center;font-size:10px;color:#94a3b8;">FaOnSisT v5.0 - Otomatik rapor &middot; ${new Date().toLocaleString('tr-TR')}</div></body></html>`);
-    w.document.close();
-    w.print();
+    const ph=getPrintHeader('ENTERPRISE RAPOR', new Date().toLocaleDateString('tr-TR'));
+    let projRows=S.projects.map(p=>`<tr><td>${p.name}</td><td>₺${fmtFull(p.budget)}</td><td>₺${fmtFull(p.spent||0)}</td><td>%${p.completion}</td><td>${stName(p.status)}</td></tr>`).join('');
+    let ihaleRows=S.tenders.map(t=>`<tr><td>${t.item}</td><td>${t.supplier}</td><td>₺${fmtFull(t.amount)}</td><td>${stName(t.status)}</td></tr>`).join('');
+    let satisRows=S.sales.map(s=>`<tr><td>${s.customer}</td><td>${s.product}</td><td>₺${fmtFull(s.price)}</td><td>₺${fmtFull(s.paid)}</td><td>${stName(s.stage)}</td></tr>`).join('');
+    const htmlStr=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rapor</title><style>
+      ${ph.css}
+      h2{font-size:15px;margin-top:22px;border-bottom:2px solid ${ph.renk};padding-bottom:4px;color:${ph.renk};}
+      table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
+      thead th{padding:8px 10px;text-align:left;font-size:12px;}
+      td{padding:7px 10px;border-bottom:1px solid #e5e7eb;}
+      tbody tr:nth-child(even){background:#f8fafc;}
+      .stat{display:inline-block;padding:8px 16px;margin:4px;border-radius:8px;background:#f1f5f9;}
+      .stat b{display:block;font-size:18px;color:${ph.renk};}
+      @media print{body{padding:20px;}}
+    </style></head><body>
+    ${ph.headerHtml}
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+      <div class="stat">Projeler<b>${S.projects.length}</b></div>
+      <div class="stat">Toplam Bütçe<b>₺${fmtFull(projBudget)}</b></div>
+      <div class="stat">İhaleler<b>${S.tenders.length}</b></div>
+      <div class="stat">Satışlar<b>₺${fmtFull(salesTotal)}</b></div>
+      <div class="stat">Tahsilat<b>₺${fmtFull(paidTotal)}</b></div>
+    </div>
+    <h2>Projeler</h2><table><thead><tr><th>Proje</th><th>Bütçe</th><th>Harcanan</th><th>Tamamlanma</th><th>Durum</th></tr></thead><tbody>${projRows}</tbody></table>
+    <h2>İhaleler</h2><table><thead><tr><th>Malzeme</th><th>Tedarikçi</th><th>Tutar</th><th>Durum</th></tr></thead><tbody>${ihaleRows}</tbody></table>
+    <h2>Satışlar</h2><table><thead><tr><th>Müşteri</th><th>Ürün</th><th>Fiyat</th><th>Ödenen</th><th>Aşama</th></tr></thead><tbody>${satisRows}</tbody></table>
+    <div style="margin-top:32px;text-align:center;font-size:10px;color:#9ca3af;">${(S.sirket&&S.sirket.ad)||'FaOnSisT v5.0'} · Otomatik Rapor · ${new Date().toLocaleString('tr-TR')}</div>
+    <script>setTimeout(()=>window.print(),600)<\/script>
+    </body></html>`;
+    dmrPrintBlob(htmlStr);
 }
 
 // ===================== v5 - THREAD/REPLY =====================
@@ -9999,17 +10028,39 @@ function printHakedisReport(projectId,hakedisId){
     let kRows=(h.kalemler||[]).map((k,i)=>`<tr><td>${i+1}</td><td>${k.pozNo||'-'}</td><td>${k.kalemAdi||'-'}</td><td>${k.birim||'-'}</td><td>${(k.sozlesmeMiktar||0).toLocaleString('tr-TR')}</td><td>${(k.birimFiyat||0).toLocaleString('tr-TR',{minimumFractionDigits:2})}</td><td>${((k.sozlesmeMiktar||0)*(k.birimFiyat||0)).toLocaleString('tr-TR',{minimumFractionDigits:2})}</td><td>${(k.oncekiToplam||0).toFixed(1)}</td><td style="font-weight:bold;color:#16a34a">${(k.buDonemMiktar||0).toFixed(1)}</td><td>${(k.toplamImalat||0).toFixed(1)}</td><td>${(k.buDonemTutar||0).toLocaleString('tr-TR',{minimumFractionDigits:2})}</td><td>${((k.toplamImalat||0)*(k.birimFiyat||0)).toLocaleString('tr-TR',{minimumFractionDigits:2})}</td><td>${k.imalatYuzdesi||0}%</td></tr>`).join('');
     let kesRows='';
     if(h.kesintiler){Object.keys(h.kesintiler).forEach(k=>{const kd=KESINTI_DEFAULTS.find(x=>x.k===k);if(kd&&(h.kesintiler[k].tutar||0)>0){const oranStr=h.kesintiler[k].oran?(' (%'+h.kesintiler[k].oran+')'):'';kesRows+=`<tr><td>${kd.l}${oranStr}</td><td style="text-align:right;color:red">-${h.kesintiler[k].tutar.toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr>`;}});}
-    const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><title>Hakedis Raporu - ${h.no}</title><style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px;color:#333}h1{font-size:16px;text-align:center;margin-bottom:5px}h2{font-size:13px;margin-top:15px;border-bottom:1px solid #ccc;padding-bottom:3px}table{width:100%;border-collapse:collapse;margin:8px 0}th,td{border:1px solid #ddd;padding:4px 6px;text-align:left;font-size:10px}th{background:#f5f5f5;font-weight:bold}.right{text-align:right}.bold{font-weight:bold}.green{color:#16a34a}.sum-row{background:#f0f9ff;font-weight:bold}.net-row{background:#ecfdf5;font-weight:bold;font-size:13px}.header-info{display:flex;justify-content:space-between;margin-bottom:15px}.header-info div{flex:1}.sign-area{display:flex;justify-content:space-between;margin-top:40px}.sign-box{width:30%;text-align:center;border-top:1px solid #333;padding-top:5px}@media print{body{padding:10px}}</style></head><body>
-    <h1>HAKEDIS RAPORU</h1><p style="text-align:center;color:#666">${tipLabel} | ${durumLabels[h.durum]||h.durum}</p>
-    <div class="header-info"><div><b>Proje:</b> ${p.name}<br><b>Muteahhit:</b> ${p.contractor}<br><b>Sozlesme Bedeli:</b> ${(p.contractAmount||p.budget).toLocaleString('tr-TR')} TL</div><div style="text-align:right"><b>Hakedis No:</b> ${h.no}<br><b>Donem:</b> ${h.donem||'-'}<br><b>Tarih:</b> ${h.tarih||'-'}</div></div>
-    <h2>IS KALEMLERI ICMALI</h2>
-    <table><thead><tr><th>S.No</th><th>Poz No</th><th>Is Kalemi</th><th>Birim</th><th>Sozlesme Miktar</th><th>B.Fiyat (TL)</th><th>Sozlesme Tutar (TL)</th><th>Onceki Toplam</th><th>Bu Donem</th><th>Kumulatif</th><th>Bu Donem Tutar (TL)</th><th>Toplam HK Tutar (TL)</th><th>%</th></tr></thead><tbody>${kRows}</tbody></table>
-    <h2>HESAP OZETI</h2>
-    <table style="width:50%"><tr><td>Is Kalemleri Toplami</td><td class="right">${(h.isKalemleriToplam||h.toplam||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr>${h.fiyatFarkiOran?`<tr><td>Fiyat Farki (%${h.fiyatFarkiOran})</td><td class="right">${(h.fiyatFarkiTutar||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr>`:''}<tr class="sum-row"><td>Ara Toplam</td><td class="right">${(h.araToplam||h.toplam||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr><tr><td>KDV (%${h.kdvOran||20})</td><td class="right">${(h.kdv||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr><tr class="sum-row"><td>Genel Toplam</td><td class="right">${(h.genelToplam||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr>${kesRows}<tr style="background:#fef2f2"><td class="bold">Toplam Kesinti</td><td class="right bold" style="color:red">-${(h.toplamKesinti||h.stopaj||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr><tr class="net-row"><td>NET ODEME</td><td class="right green">${(h.net||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr></table>
-    <div class="sign-area"><div class="sign-box"><b>Hazirlayan</b><br>${h.hazirlayan||'-'}</div><div class="sign-box"><b>Kontrol Eden</b><br>${h.kontrolEden||'-'}</div><div class="sign-box"><b>Onaylayan</b><br>${h.onaylayan||'-'}</div></div>
-    <script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
-    w.document.close();
+    const ph=getPrintHeader('HAKEDİŞ RAPORU', `${tipLabel} | ${durumLabels[h.durum]||h.durum}`);
+    const hImzalar=getPrintImzalar('genel');
+    const htmlStr=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hakedis Raporu - ${h.no}</title><style>
+      ${ph.css}
+      h2{font-size:13px;margin-top:15px;border-bottom:2px solid ${ph.renk};padding-bottom:3px;color:${ph.renk};}
+      table{width:100%;border-collapse:collapse;margin:8px 0;}
+      th,td{border:1px solid #ddd;padding:4px 6px;text-align:left;font-size:10px;}
+      thead th{background:${ph.renk};color:#fff;font-weight:bold;}
+      .right{text-align:right;} .bold{font-weight:bold;} .green{color:#16a34a;}
+      .sum-row{background:#f0f9ff;font-weight:bold;}
+      .net-row{background:#ecfdf5;font-weight:bold;font-size:13px;}
+      .header-info{display:flex;justify-content:space-between;margin-bottom:15px;}
+      .header-info div{flex:1;}
+      .sign-area{display:flex;justify-content:space-between;margin-top:40px;}
+      .sign-box{width:30%;text-align:center;border-top:1px solid #6b7280;padding-top:5px;font-size:12px;}
+      @media print{body{padding:10px;}}
+    </style></head><body>
+    ${ph.headerHtml}
+    <div class="header-info" style="margin-top:14px;">
+      <div><b>Proje:</b> ${p.name}<br><b>Müteahhit:</b> ${p.contractor}<br><b>Sözleşme Bedeli:</b> ${(p.contractAmount||p.budget).toLocaleString('tr-TR')} TL</div>
+      <div style="text-align:right"><b>Hakediş No:</b> ${h.no}<br><b>Dönem:</b> ${h.donem||'-'}<br><b>Tarih:</b> ${h.tarih||'-'}</div>
+    </div>
+    <h2>İŞ KALEMLERİ İCMALİ</h2>
+    <table><thead><tr><th>S.No</th><th>Poz No</th><th>İş Kalemi</th><th>Birim</th><th>Sözleşme Miktar</th><th>B.Fiyat (TL)</th><th>Sözleşme Tutar (TL)</th><th>Önceki Toplam</th><th>Bu Dönem</th><th>Kümülatif</th><th>Bu Dönem Tutar (TL)</th><th>Toplam HK Tutar (TL)</th><th>%</th></tr></thead><tbody>${kRows}</tbody></table>
+    <h2>HESAP ÖZETİ</h2>
+    <table style="width:50%"><tr><td>İş Kalemleri Toplamı</td><td class="right">${(h.isKalemleriToplam||h.toplam||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr>${h.fiyatFarkiOran?`<tr><td>Fiyat Farkı (%${h.fiyatFarkiOran})</td><td class="right">${(h.fiyatFarkiTutar||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr>`:''}<tr class="sum-row"><td>Ara Toplam</td><td class="right">${(h.araToplam||h.toplam||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr><tr><td>KDV (%${h.kdvOran||20})</td><td class="right">${(h.kdv||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr><tr class="sum-row"><td>Genel Toplam</td><td class="right">${(h.genelToplam||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr>${kesRows}<tr style="background:#fef2f2"><td class="bold">Toplam Kesinti</td><td class="right bold" style="color:red">-${(h.toplamKesinti||h.stopaj||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr><tr class="net-row"><td>NET ÖDEME</td><td class="right green">${(h.net||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} TL</td></tr></table>
+    <div class="sign-area">
+      <div class="sign-box"><div class="sign-label" style="color:${ph.renk};font-weight:600;">${hImzalar[0]||'Hazırlayan'}</div><br>${h.hazirlayan||'________________'}</div>
+      <div class="sign-box"><div class="sign-label" style="color:${ph.renk};font-weight:600;">${hImzalar[1]||'Kontrol Eden'}</div><br>${h.kontrolEden||'________________'}</div>
+      <div class="sign-box"><div class="sign-label" style="color:${ph.renk};font-weight:600;">${hImzalar[2]||'Onaylayan'}</div><br>${h.onaylayan||'________________'}</div>
+    </div>
+    <script>setTimeout(()=>window.print(),500)<\/script></body></html>`;
+    dmrPrintBlob(htmlStr);
 }
 
 // ===================== SANTIYE GUNLUGU CRUD =====================
@@ -11429,16 +11480,40 @@ function printTransferBelgesi(hId){
     const kaynak=(S.depolar||[]).find(d=>d.id===h.kaynakDepoId);
     const hedef=(S.depolar||[]).find(d=>d.id===h.hedefDepoId);
     const proje=h.projectId?(S.projects||[]).find(p=>p.id===h.projectId):null;
-    const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><title>Transfer Belgesi</title><style>body{font-family:Arial,sans-serif;font-size:12px;padding:30px;color:#1e293b;}h1{font-size:18px;text-align:center;margin-bottom:4px;}h2{font-size:11px;text-align:center;color:#64748b;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th,td{border:1px solid #cbd5e1;padding:6px 10px;text-align:left;font-size:11px;}th{background:#f1f5f9;}.sign-area{display:flex;justify-content:space-between;margin-top:50px;}.sign-box{width:30%;text-align:center;border-top:1px solid #94a3b8;padding-top:8px;font-size:10px;color:#64748b;}.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:bold;}.acil{background:#fef2f2;color:#dc2626;}.normal{background:#f0fdf4;color:#16a34a;}.planli{background:#eff6ff;color:#2563eb;}@media print{body{padding:15px;}}</style></head><body>`);
-    w.document.write(`<h1>MALZEME TRANSFER BELGESI</h1><h2>FaOnSisT - ${new Date().toLocaleDateString('tr-TR')}</h2>`);
-    w.document.write(`<table><tr><th style="width:30%">Belge No</th><td>TRF-${h.id}</td><th style="width:20%">Tarih</th><td>${h.tarih}</td></tr><tr><th>Hareket Tipi</th><td>${HAREKET_TIP_LABELS[h.tip]||h.tip}</td><th>Aciliyet</th><td><span class="badge ${h.aciliyet}">${h.aciliyet||'normal'}</span></td></tr><tr><th>Kaynak</th><td>${kaynak?kaynak.ad:'-'}</td><th>Hedef</th><td>${hedef?hedef.ad:(proje?proje.name:'-')}</td></tr><tr><th>Talep Eden</th><td>${h.talepEden||'-'}</td><th>Onaylayan</th><td>${h.onaylayan||'-'}</td></tr></table>`);
-    w.document.write(`<h3 style="font-size:13px;margin-top:20px;">Malzeme Detayi</h3><table><tr><th>Malzeme</th><th>Barkod</th><th>Miktar</th><th>Birim</th><th>Birim Fiyat</th><th>Toplam</th></tr><tr><td>${item?item.ad:'?'}</td><td>${item?item.barkod||'-':'-'}</td><td style="text-align:right">${h.miktar}</td><td>${item?item.birim:'-'}</td><td style="text-align:right">${item?(item.birimFiyat||0).toLocaleString('tr-TR')+' TL':'-'}</td><td style="text-align:right">${item?(h.miktar*(item.birimFiyat||0)).toLocaleString('tr-TR')+' TL':'-'}</td></tr></table>`);
-    if(h.irsaliyeNo)w.document.write(`<p style="font-size:10px;color:#64748b;">Irsaliye No: ${h.irsaliyeNo}</p>`);
-    if(h.aciklama)w.document.write(`<p style="font-size:10px;color:#64748b;">Aciklama: ${h.aciklama}</p>`);
-    w.document.write(`<div class="sign-area"><div class="sign-box"><b>Teslim Eden</b><br><br><br>${kaynak&&kaynak.sorumlu?kaynak.sorumlu:'________________'}</div><div class="sign-box"><b>Onaylayan</b><br><br><br>${h.onaylayan||'________________'}</div><div class="sign-box"><b>Teslim Alan</b><br><br><br>${hedef&&hedef.sorumlu?hedef.sorumlu:'________________'}</div></div>`);
-    w.document.write(`<div style="margin-top:40px;text-align:center;font-size:9px;color:#94a3b8;">FaOnSisT v5.0 - Transfer Belgesi &middot; ${new Date().toLocaleString('tr-TR')}</div><script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
-    w.document.close();
+    const ph=getPrintHeader('MALZEME TRANSFER BELGESİ', new Date().toLocaleDateString('tr-TR'));
+    const tImzalar=getPrintImzalar('zimmet');
+    const htmlStr=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Transfer Belgesi</title><style>
+      ${ph.css}
+      table{width:100%;border-collapse:collapse;margin:12px 0;}
+      th,td{border:1px solid #cbd5e1;padding:6px 10px;text-align:left;font-size:11px;}
+      thead th{background:${ph.renk};color:#fff;}
+      td th{background:#f1f5f9;}
+      .sign-area{display:flex;justify-content:space-between;margin-top:50px;}
+      .sign-box{width:30%;text-align:center;border-top:1px solid #94a3b8;padding-top:8px;font-size:10px;color:#64748b;}
+      .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:bold;}
+      .acil{background:#fef2f2;color:#dc2626;} .normal{background:#f0fdf4;color:#16a34a;} .planli{background:#eff6ff;color:#2563eb;}
+      @media print{body{padding:15px;}}
+    </style></head><body>
+    ${ph.headerHtml}
+    <table style="margin-top:14px;"><tbody>
+      <tr><th style="width:30%;background:#f1f5f9;">Belge No</th><td>TRF-${h.id}</td><th style="width:20%;background:#f1f5f9;">Tarih</th><td>${h.tarih}</td></tr>
+      <tr><th style="background:#f1f5f9;">Hareket Tipi</th><td>${HAREKET_TIP_LABELS[h.tip]||h.tip}</td><th style="background:#f1f5f9;">Aciliyet</th><td><span class="badge ${h.aciliyet}">${h.aciliyet||'normal'}</span></td></tr>
+      <tr><th style="background:#f1f5f9;">Kaynak</th><td>${kaynak?kaynak.ad:'-'}</td><th style="background:#f1f5f9;">Hedef</th><td>${hedef?hedef.ad:(proje?proje.name:'-')}</td></tr>
+      <tr><th style="background:#f1f5f9;">Talep Eden</th><td>${h.talepEden||'-'}</td><th style="background:#f1f5f9;">Onaylayan</th><td>${h.onaylayan||'-'}</td></tr>
+    </tbody></table>
+    <h3 style="font-size:13px;margin-top:20px;color:${ph.renk};">Malzeme Detayı</h3>
+    <table><thead><tr><th>Malzeme</th><th>Barkod</th><th>Miktar</th><th>Birim</th><th>Birim Fiyat</th><th>Toplam</th></tr></thead>
+    <tbody><tr><td>${item?item.ad:'?'}</td><td>${item?item.barkod||'-':'-'}</td><td style="text-align:right">${h.miktar}</td><td>${item?item.birim:'-'}</td><td style="text-align:right">${item?(item.birimFiyat||0).toLocaleString('tr-TR')+' TL':'-'}</td><td style="text-align:right">${item?(h.miktar*(item.birimFiyat||0)).toLocaleString('tr-TR')+' TL':'-'}</td></tr></tbody></table>
+    ${h.irsaliyeNo?`<p style="font-size:10px;color:#64748b;">İrsaliye No: ${h.irsaliyeNo}</p>`:''}
+    ${h.aciklama?`<p style="font-size:10px;color:#64748b;">Açıklama: ${h.aciklama}</p>`:''}
+    <div class="sign-area">
+      <div class="sign-box"><div style="color:${ph.renk};font-weight:600;">${tImzalar[0]||'Teslim Eden'}</div><br><br>${kaynak&&kaynak.sorumlu?kaynak.sorumlu:'________________'}</div>
+      <div class="sign-box"><div style="color:${ph.renk};font-weight:600;">Onaylayan</div><br><br>${h.onaylayan||'________________'}</div>
+      <div class="sign-box"><div style="color:${ph.renk};font-weight:600;">${tImzalar[1]||'Teslim Alan'}</div><br><br>${hedef&&hedef.sorumlu?hedef.sorumlu:'________________'}</div>
+    </div>
+    <div style="margin-top:40px;text-align:center;font-size:9px;color:#94a3b8;">${(S.sirket&&S.sirket.ad)||'FaOnSisT v5.0'} · Transfer Belgesi · ${new Date().toLocaleString('tr-TR')}</div>
+    <script>setTimeout(()=>window.print(),500)<\/script></body></html>`;
+    dmrPrintBlob(htmlStr);
 }
 function openDepoSayimForm(){
     document.getElementById('ds-tarih').value=new Date().toISOString().slice(0,10);
@@ -11626,16 +11701,38 @@ function printZimmetFormu(zId){
     const z=(S.zimmetler||[]).find(x=>x.id===zId);if(!z)return;
     const item=(S.envanter||[]).find(i=>i.id===z.envanterItemId);
     const depo=(S.depolar||[]).find(d=>d.id===z.depoId);
-    const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><title>Zimmet Formu</title><style>body{font-family:Arial,sans-serif;font-size:12px;padding:30px;color:#1e293b;}h1{font-size:18px;text-align:center;margin-bottom:4px;}h2{font-size:11px;text-align:center;color:#64748b;margin-bottom:24px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th,td{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;font-size:11px;}th{background:#f1f5f9;font-weight:600;}.sign-area{display:flex;justify-content:space-between;margin-top:60px;}.sign-box{width:40%;text-align:center;border-top:1px solid #94a3b8;padding-top:10px;font-size:10px;color:#64748b;}.status{display:inline-block;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:bold;}.aktif{background:#fef3c7;color:#d97706;}.iade{background:#dcfce7;color:#16a34a;}.kayip{background:#fef2f2;color:#dc2626;}@media print{body{padding:15px;}}</style></head><body>`);
-    w.document.write(`<h1>ZIMMET / MALZEME TESLIM FORMU</h1><h2>FaOnSisT - Envanter Yonetimi</h2>`);
-    w.document.write(`<table><tr><th style="width:30%">Zimmet No</th><td>ZMT-${z.id}</td><th style="width:20%">Tarih</th><td>${z.tarih}</td></tr><tr><th>Teslim Alan</th><td><b>${z.zimmetliKisi}</b></td><th>Departman</th><td>${z.departman||'-'}</td></tr><tr><th>Durum</th><td><span class="status ${z.durum}">${z.durum==='aktif'?'AKTIF':z.durum==='iade'?'IADE EDILDI':'KAYIP'}</span>${z.iadeTarihi?' ('+z.iadeTarihi+')':''}</td><th>Onaylayan</th><td>${z.onaylayan||'-'}</td></tr></table>`);
-    w.document.write(`<h3 style="font-size:13px;margin-top:20px;">Teslim Edilen Malzeme</h3><table><tr><th>Malzeme Adi</th><th>Barkod / Seri No</th><th>Miktar</th><th>Birim</th><th>Birim Deger</th><th>Toplam Deger</th></tr><tr><td><b>${item?item.ad:'?'}</b></td><td>${item?item.barkod||'-':'-'}</td><td style="text-align:right">${z.miktar}</td><td>${item?item.birim:'-'}</td><td style="text-align:right">${item?(item.birimFiyat||0).toLocaleString('tr-TR')+' TL':'-'}</td><td style="text-align:right"><b>${item?(z.miktar*(item.birimFiyat||0)).toLocaleString('tr-TR')+' TL':'-'}</b></td></tr></table>`);
-    if(z.notlar)w.document.write(`<p style="font-size:10px;color:#64748b;margin-top:8px;">Not: ${z.notlar}</p>`);
-    w.document.write(`<div style="margin-top:20px;padding:10px;background:#f8fafc;border-radius:6px;font-size:9px;color:#64748b;">Bu form ile teslim alinan malzeme, teslim alan kisinin sorumlulugundadir. Malzemenin hasar gormesi, kaybolmasi veya amaci disinda kullanilmasi halinde teslim alan kisi sorumludur.</div>`);
-    w.document.write(`<div class="sign-area"><div class="sign-box"><b>Teslim Eden</b><br>(Depo Sorumlusu)<br><br><br>${depo&&depo.sorumlu?depo.sorumlu:'________________'}<br>Tarih: ___/___/______</div><div class="sign-box"><b>Teslim Alan</b><br><br><br><br>${z.zimmetliKisi}<br>Tarih: ${z.tarih}</div></div>`);
-    w.document.write(`<div style="margin-top:40px;text-align:center;font-size:9px;color:#94a3b8;">FaOnSisT v5.0 - Zimmet Formu &middot; ${new Date().toLocaleString('tr-TR')}</div><script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
-    w.document.close();
+    const ph=getPrintHeader('ZİMMET / MALZEME TESLİM FORMU', 'Envanter Yönetimi');
+    const zImzalar=getPrintImzalar('zimmet');
+    const htmlStr=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Zimmet Formu</title><style>
+      ${ph.css}
+      table{width:100%;border-collapse:collapse;margin:12px 0;}
+      th,td{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;font-size:11px;}
+      th{background:#f1f5f9;font-weight:600;}
+      h3{font-size:13px;margin-top:20px;color:${ph.renk};}
+      .sign-area{display:flex;justify-content:space-between;margin-top:60px;}
+      .sign-box{width:40%;text-align:center;border-top:1px solid #94a3b8;padding-top:10px;font-size:10px;color:#64748b;}
+      .status{display:inline-block;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:bold;}
+      .aktif{background:#fef3c7;color:#d97706;} .iade{background:#dcfce7;color:#16a34a;} .kayip{background:#fef2f2;color:#dc2626;}
+      @media print{body{padding:15px;}}
+    </style></head><body>
+    ${ph.headerHtml}
+    <table style="margin-top:14px;"><tbody>
+      <tr><th style="width:30%">Zimmet No</th><td>ZMT-${z.id}</td><th style="width:20%">Tarih</th><td>${z.tarih}</td></tr>
+      <tr><th>Teslim Alan</th><td><b>${z.zimmetliKisi}</b></td><th>Departman</th><td>${z.departman||'-'}</td></tr>
+      <tr><th>Durum</th><td><span class="status ${z.durum}">${z.durum==='aktif'?'AKTİF':z.durum==='iade'?'İADE EDİLDİ':'KAYIP'}</span>${z.iadeTarihi?' ('+z.iadeTarihi+')':''}</td><th>Onaylayan</th><td>${z.onaylayan||'-'}</td></tr>
+    </tbody></table>
+    <h3>Teslim Edilen Malzeme</h3>
+    <table><thead><tr><th>Malzeme Adı</th><th>Barkod / Seri No</th><th>Miktar</th><th>Birim</th><th>Birim Değer</th><th>Toplam Değer</th></tr></thead>
+    <tbody><tr><td><b>${item?item.ad:'?'}</b></td><td>${item?item.barkod||'-':'-'}</td><td style="text-align:right">${z.miktar}</td><td>${item?item.birim:'-'}</td><td style="text-align:right">${item?(item.birimFiyat||0).toLocaleString('tr-TR')+' TL':'-'}</td><td style="text-align:right"><b>${item?(z.miktar*(item.birimFiyat||0)).toLocaleString('tr-TR')+' TL':'-'}</b></td></tr></tbody></table>
+    ${z.notlar?`<p style="font-size:10px;color:#64748b;margin-top:8px;">Not: ${z.notlar}</p>`:''}
+    <div style="margin-top:20px;padding:10px;background:#f8fafc;border-radius:6px;font-size:9px;color:#64748b;">Bu form ile teslim alınan malzeme, teslim alan kişinin sorumluluğundadır. Malzemenin hasar görmesi, kaybolması veya amacı dışında kullanılması halinde teslim alan kişi sorumludur.</div>
+    <div class="sign-area">
+      <div class="sign-box"><div style="color:${ph.renk};font-weight:600;">${zImzalar[0]||'Teslim Eden'}</div>(Depo Sorumlusu)<br><br><br>${depo&&depo.sorumlu?depo.sorumlu:'________________'}<br>Tarih: ___/___/______</div>
+      <div class="sign-box"><div style="color:${ph.renk};font-weight:600;">${zImzalar[1]||'Teslim Alan'}</div><br><br><br>${z.zimmetliKisi}<br>Tarih: ${z.tarih}</div>
+    </div>
+    <div style="margin-top:40px;text-align:center;font-size:9px;color:#94a3b8;">${(S.sirket&&S.sirket.ad)||'FaOnSisT v5.0'} · Zimmet Formu · ${new Date().toLocaleString('tr-TR')}</div>
+    <script>setTimeout(()=>window.print(),500)<\/script></body></html>`;
+    dmrPrintBlob(htmlStr);
 }
 
 // ===================== BILDIRIM SISTEMI =====================
@@ -12105,18 +12202,46 @@ function addAracKayit(){
 // Print & Export
 function printAracZimmetBelgesi(aracId){
     const a=(S.araclar||[]).find(x=>x.id===aracId);if(!a)return;
-    const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><title>Arac Zimmet Belgesi</title><style>body{font-family:Arial,sans-serif;font-size:12px;padding:30px;color:#1e293b;}h1{font-size:18px;text-align:center;margin-bottom:4px;}h2{font-size:11px;text-align:center;color:#64748b;margin-bottom:20px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th,td{border:1px solid #cbd5e1;padding:6px 10px;text-align:left;font-size:11px;}th{background:#f1f5f9;}.sign-area{display:flex;justify-content:space-between;margin-top:50px;}.sign-box{width:40%;text-align:center;border-top:1px solid #94a3b8;padding-top:8px;font-size:10px;color:#64748b;}@media print{body{padding:15px;}}</style></head><body>`);
-    w.document.write(`<h1>ARAC ZIMMET / TAHSIS BELGESI</h1><h2>FaOnSisT - Filo Yonetimi &middot; ${new Date().toLocaleDateString('tr-TR')}</h2>`);
-    w.document.write(`<table><tr><th style="width:30%">Plaka</th><td><b>${a.plaka}</b></td><th style="width:20%">Tarih</th><td>${new Date().toLocaleDateString('tr-TR')}</td></tr><tr><th>Arac</th><td>${a.marka} ${a.model} ${a.yil||''}</td><th>Renk</th><td>${a.renk||'-'}</td></tr><tr><th>Yakit Tipi</th><td>${a.yakitTipi||'-'}</td><th>KM</th><td>${(a.km||0).toLocaleString('tr-TR')}</td></tr><tr><th>Sasi No</th><td>${a.sasino||'-'}</td><th>Motor No</th><td>${a.motorNo||'-'}</td></tr><tr><th>Sahiplik</th><td>${a.sahiplik||'-'}</td><th>Durum</th><td>${ARAC_DURUM_LABELS[a.durum]||a.durum}</td></tr></table>`);
-    w.document.write(`<h3 style="font-size:13px;margin-top:20px;">Zimmet Bilgileri</h3><table><tr><th style="width:30%">Teslim Alan</th><td><b>${a.zimmetliKisi||'-'}</b></td></tr><tr><th>Departman</th><td>${a.zimmetDepartman||'-'}</td></tr></table>`);
+    const ph=getPrintHeader('ARAÇ ZİMMET / TAHSİS BELGESİ', 'Filo Yönetimi · '+new Date().toLocaleDateString('tr-TR'));
+    const aImzalar=getPrintImzalar('zimmet');
     const b=a.belgeler||{};
-    w.document.write(`<h3 style="font-size:13px;margin-top:20px;">Belge Durumlari</h3><table><tr><th>Belge</th><th>Son Tarih</th><th>Bitis Tarihi</th></tr><tr><td>Muayene</td><td>${b.muayene?b.muayene.sonTarih||'-':'-'}</td><td>${b.muayene?b.muayene.bitisTarih||'-':'-'}</td></tr><tr><td>Sigorta</td><td>${b.sigorta?b.sigorta.sonTarih||'-':'-'}</td><td>${b.sigorta?b.sigorta.bitisTarih||'-':'-'}</td></tr><tr><td>Kasko</td><td>${b.kasko?b.kasko.sonTarih||'-':'-'}</td><td>${b.kasko?b.kasko.bitisTarih||'-':'-'}</td></tr><tr><td>Egzoz Emisyon</td><td>${b.egzoz?b.egzoz.sonTarih||'-':'-'}</td><td>${b.egzoz?b.egzoz.bitisTarih||'-':'-'}</td></tr></table>`);
-    if(a.notlar)w.document.write(`<p style="font-size:10px;color:#64748b;margin-top:8px;">Not: ${a.notlar}</p>`);
-    w.document.write(`<div style="margin-top:15px;padding:10px;background:#f8fafc;border-radius:6px;font-size:9px;color:#64748b;">Bu belge ile teslim alinan arac, teslim alan kisinin sorumlulugundadir. Aracin hasar gormesi, trafik cezasi, yakit masraflari ve gunluk bakimi teslim alan kisiye aittir.</div>`);
-    w.document.write(`<div class="sign-area"><div class="sign-box"><b>Teslim Eden</b><br>(Filo Sorumlusu)<br><br><br>________________<br>Tarih: ___/___/______</div><div class="sign-box"><b>Teslim Alan</b><br><br><br><br>${a.zimmetliKisi||'________________'}<br>Tarih: ${new Date().toLocaleDateString('tr-TR')}</div></div>`);
-    w.document.write(`<div style="margin-top:40px;text-align:center;font-size:9px;color:#94a3b8;">FaOnSisT v5.0 - Arac Zimmet Belgesi &middot; ${new Date().toLocaleString('tr-TR')}</div><script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
-    w.document.close();
+    const htmlStr=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Araç Zimmet Belgesi</title><style>
+      ${ph.css}
+      table{width:100%;border-collapse:collapse;margin:12px 0;}
+      th,td{border:1px solid #cbd5e1;padding:6px 10px;text-align:left;font-size:11px;}
+      th{background:#f1f5f9;}
+      h3{font-size:13px;margin-top:20px;color:${ph.renk};}
+      .sign-area{display:flex;justify-content:space-between;margin-top:50px;}
+      .sign-box{width:40%;text-align:center;border-top:1px solid #94a3b8;padding-top:8px;font-size:10px;color:#64748b;}
+      @media print{body{padding:15px;}}
+    </style></head><body>
+    ${ph.headerHtml}
+    <table style="margin-top:14px;"><tbody>
+      <tr><th style="width:30%">Plaka</th><td><b>${a.plaka}</b></td><th style="width:20%">Tarih</th><td>${new Date().toLocaleDateString('tr-TR')}</td></tr>
+      <tr><th>Araç</th><td>${a.marka} ${a.model} ${a.yil||''}</td><th>Renk</th><td>${a.renk||'-'}</td></tr>
+      <tr><th>Yakıt Tipi</th><td>${a.yakitTipi||'-'}</td><th>KM</th><td>${(a.km||0).toLocaleString('tr-TR')}</td></tr>
+      <tr><th>Şasi No</th><td>${a.sasino||'-'}</td><th>Motor No</th><td>${a.motorNo||'-'}</td></tr>
+      <tr><th>Sahiplik</th><td>${a.sahiplik||'-'}</td><th>Durum</th><td>${ARAC_DURUM_LABELS[a.durum]||a.durum}</td></tr>
+    </tbody></table>
+    <h3>Zimmet Bilgileri</h3>
+    <table><tbody><tr><th style="width:30%">Teslim Alan</th><td><b>${a.zimmetliKisi||'-'}</b></td></tr><tr><th>Departman</th><td>${a.zimmetDepartman||'-'}</td></tr></tbody></table>
+    <h3>Belge Durumları</h3>
+    <table><thead><tr><th>Belge</th><th>Son Tarih</th><th>Bitiş Tarihi</th></tr></thead>
+    <tbody>
+      <tr><td>Muayene</td><td>${b.muayene?b.muayene.sonTarih||'-':'-'}</td><td>${b.muayene?b.muayene.bitisTarih||'-':'-'}</td></tr>
+      <tr><td>Sigorta</td><td>${b.sigorta?b.sigorta.sonTarih||'-':'-'}</td><td>${b.sigorta?b.sigorta.bitisTarih||'-':'-'}</td></tr>
+      <tr><td>Kasko</td><td>${b.kasko?b.kasko.sonTarih||'-':'-'}</td><td>${b.kasko?b.kasko.bitisTarih||'-':'-'}</td></tr>
+      <tr><td>Egzoz Emisyon</td><td>${b.egzoz?b.egzoz.sonTarih||'-':'-'}</td><td>${b.egzoz?b.egzoz.bitisTarih||'-':'-'}</td></tr>
+    </tbody></table>
+    ${a.notlar?`<p style="font-size:10px;color:#64748b;margin-top:8px;">Not: ${a.notlar}</p>`:''}
+    <div style="margin-top:15px;padding:10px;background:#f8fafc;border-radius:6px;font-size:9px;color:#64748b;">Bu belge ile teslim alınan araç, teslim alan kişinin sorumluluğundadır. Aracın hasar görmesi, trafik cezası, yakıt masrafları ve günlük bakımı teslim alan kişiye aittir.</div>
+    <div class="sign-area">
+      <div class="sign-box"><div style="color:${ph.renk};font-weight:600;">${aImzalar[0]||'Teslim Eden'}</div>(Filo Sorumlusu)<br><br><br>________________<br>Tarih: ___/___/______</div>
+      <div class="sign-box"><div style="color:${ph.renk};font-weight:600;">${aImzalar[1]||'Teslim Alan'}</div><br><br><br>${a.zimmetliKisi||'________________'}<br>Tarih: ${new Date().toLocaleDateString('tr-TR')}</div>
+    </div>
+    <div style="margin-top:40px;text-align:center;font-size:9px;color:#94a3b8;">${(S.sirket&&S.sirket.ad)||'FaOnSisT v5.0'} · Araç Zimmet Belgesi · ${new Date().toLocaleString('tr-TR')}</div>
+    <script>setTimeout(()=>window.print(),500)<\/script></body></html>`;
+    dmrPrintBlob(htmlStr);
 }
 
 function exportAracExcel(){
@@ -13253,46 +13378,45 @@ function printProfessionalZimmetBelgesi(belgeNo){
         const td=(z.birimDeger||0)*(z.miktar||1);
         rows+=`<tr><td>${i+1}</td><td><b>${z.malzemeAdi}</b></td><td>${z.seriNo||'-'}</td><td style="text-align:center">${z.miktar||1}</td><td style="text-align:right">${(z.birimDeger||0).toLocaleString('tr-TR')} TL</td><td style="text-align:right">${td.toLocaleString('tr-TR')} TL</td></tr>`;
     });
-    const htmlContent=`<!DOCTYPE html><html><head><title>Zimmet Belgesi - ${belgeNo}</title><style>
-    *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;padding:25px;color:#1e293b;line-height:1.5;}
-    .header{text-align:center;margin-bottom:20px;padding-bottom:15px;border-bottom:3px solid #0f766e;}
-    .header h1{font-size:22px;color:#0f766e;margin-bottom:3px;letter-spacing:1px;}
-    .header h2{font-size:13px;color:#64748b;font-weight:normal;}
+    const ph=getPrintHeader('ZİMMET / MALZEME TESLİM TUTANAĞI', 'Asset Assignment Document');
+    const pImzalar=getPrintImzalar('zimmet');
+    const htmlContent=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Zimmet Belgesi - ${belgeNo}</title><style>
+    ${ph.css}
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px;}
     .info-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px;}
     .info-box label{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;}
     .info-box span{display:block;font-weight:600;font-size:12px;margin-top:2px;}
-    .section-title{font-size:12px;font-weight:bold;color:#0f766e;margin:15px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;}
+    .section-title{font-size:12px;font-weight:bold;color:${ph.renk};margin:15px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0;}
     table{width:100%;border-collapse:collapse;margin:8px 0;}
-    th{background:#0f766e;color:white;font-size:9px;text-transform:uppercase;letter-spacing:0.5px;padding:8px 6px;text-align:left;}
     td{border-bottom:1px solid #e2e8f0;padding:7px 6px;font-size:10px;}
     tr:nth-child(even){background:#f8fafc;}
     .total-row{background:#f0fdfa !important;font-weight:bold;}
-    .total-row td{border-top:2px solid #0f766e;font-size:11px;}
+    .total-row td{border-top:2px solid ${ph.renk};font-size:11px;}
     .taahhut{margin-top:15px;padding:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;font-size:9px;color:#92400e;line-height:1.6;}
     .signs{display:flex;justify-content:space-between;margin-top:50px;}
     .sign-box{width:28%;text-align:center;padding-top:8px;border-top:1px solid #94a3b8;}
-    .sign-box strong{display:block;font-size:10px;margin-bottom:3px;}
+    .sign-box strong{display:block;font-size:10px;margin-bottom:3px;color:${ph.renk};}
     .sign-box span{font-size:9px;color:#64748b;}
     .footer{text-align:center;margin-top:30px;font-size:8px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px;}
     @media print{body{padding:15px;}}
     </style></head><body>
-    <div class="header"><div style="font-size:28px;color:#0f766e;font-weight:900;letter-spacing:2px;margin-bottom:3px;">F<span style="font-size:20px">a</span>O<span style="font-size:20px">n</span>S<span style="font-size:20px">is</span>T</div><h1>ZIMMET / MALZEME TESLIM TUTANAGI</h1><h2>Asset Assignment Document</h2></div>
-    <div class="info-grid"><div class="info-box"><label>Belge No</label><span>${belgeNo}</span></div><div class="info-box"><label>Duzenleme Tarihi</label><span>${z0.tarih||new Date().toISOString().slice(0,10)}</span></div></div>
-    <div class="section-title">PERSONEL BILGILERI</div>
-    <div class="info-grid"><div class="info-box"><label>Ad Soyad</label><span>${z0.zimmetliKisi}</span></div><div class="info-box"><label>TC Kimlik No</label><span>${z0.tcKimlikNo||'-'}</span></div><div class="info-box"><label>Departman</label><span>${z0.departman||'-'}</span></div><div class="info-box"><label>Gorev / Unvan</label><span>${z0.gorevi||'-'}</span></div><div class="info-box"><label>Ise Giris Tarihi</label><span>${z0.iseGirisTarihi||'-'}</span></div></div>
-    <div class="section-title">TESLIM EDILEN MALZEMELER</div>
-    <table><thead><tr><th>#</th><th>Malzeme / Ekipman</th><th>Seri No / IMEI</th><th style="text-align:center">Miktar</th><th style="text-align:right">Birim Deger</th><th style="text-align:right">Toplam</th></tr></thead><tbody>
+    ${ph.headerHtml}
+    <div class="info-grid" style="margin-top:14px;"><div class="info-box"><label>Belge No</label><span>${belgeNo}</span></div><div class="info-box"><label>Düzenleme Tarihi</label><span>${z0.tarih||new Date().toISOString().slice(0,10)}</span></div></div>
+    <div class="section-title">PERSONEL BİLGİLERİ</div>
+    <div class="info-grid"><div class="info-box"><label>Ad Soyad</label><span>${z0.zimmetliKisi}</span></div><div class="info-box"><label>TC Kimlik No</label><span>${z0.tcKimlikNo||'-'}</span></div><div class="info-box"><label>Departman</label><span>${z0.departman||'-'}</span></div><div class="info-box"><label>Görev / Ünvan</label><span>${z0.gorevi||'-'}</span></div><div class="info-box"><label>İşe Giriş Tarihi</label><span>${z0.iseGirisTarihi||'-'}</span></div></div>
+    <div class="section-title">TESLİM EDİLEN MALZEMELER</div>
+    <table><thead><tr><th>#</th><th>Malzeme / Ekipman</th><th>Seri No / IMEI</th><th style="text-align:center">Miktar</th><th style="text-align:right">Birim Değer</th><th style="text-align:right">Toplam</th></tr></thead><tbody>
     ${rows}
-    <tr class="total-row"><td colspan="4"></td><td style="text-align:right">TOPLAM DEGER:</td><td style="text-align:right">${toplamDeger.toLocaleString('tr-TR')} TL</td></tr></tbody></table>
-    <div class="taahhut"><b>TAAHHUTNAME:</b> Bu tutanak ile yukarida belirtilen malzeme/ekipmanlar tarafima zimmet olarak teslim edilmistir. Teslim alinan malzemelerin korunmasi, amacina uygun kullanilmasi ve istendiginde eksiksiz iade edilmesi taahhut edilmektedir. Hasar, kayip veya amac disi kullanim durumunda sorumluluk teslim alan kisiye aittir.</div>
-    <div class="signs"><div class="sign-box"><strong>Teslim Eden</strong><span>(Depo Sorumlusu)</span><br><br><br><span>${depo0&&depo0.sorumlu?depo0.sorumlu:'________________'}</span><br><span>Tarih: ___/___/______</span></div><div class="sign-box"><strong>Teslim Alan</strong><span>(Personel)</span><br><br><br><span>${z0.zimmetliKisi}</span><br><span>Tarih: ${z0.tarih||'___/___/______'}</span></div><div class="sign-box"><strong>Onaylayan</strong><span>(Yonetici)</span><br><br><br><span>${z0.onaylayan||'________________'}</span><br><span>Tarih: ___/___/______</span></div></div>
-    <div class="footer">FaOnSisT v5.0 &middot; Zimmet / Malzeme Teslim Tutanagi &middot; Belge No: ${belgeNo} &middot; ${new Date().toLocaleString('tr-TR')}</div>
+    <tr class="total-row"><td colspan="4"></td><td style="text-align:right">TOPLAM DEĞER:</td><td style="text-align:right">${toplamDeger.toLocaleString('tr-TR')} TL</td></tr></tbody></table>
+    <div class="taahhut"><b>TAAHHÜTNAME:</b> Bu tutanak ile yukarıda belirtilen malzeme/ekipmanlar tarafıma zimmet olarak teslim edilmiştir. Teslim alınan malzemelerin korunması, amacına uygun kullanılması ve istendiğinde eksiksiz iade edilmesi taahhüt edilmektedir. Hasar, kayıp veya amaç dışı kullanım durumunda sorumluluk teslim alan kişiye aittir.</div>
+    <div class="signs">
+      <div class="sign-box"><strong>${pImzalar[0]||'Teslim Eden'}</strong><span>(Depo Sorumlusu)</span><br><br><br><span>${depo0&&depo0.sorumlu?depo0.sorumlu:'________________'}</span><br><span>Tarih: ___/___/______</span></div>
+      <div class="sign-box"><strong>${pImzalar[1]||'Teslim Alan'}</strong><span>(Personel)</span><br><br><br><span>${z0.zimmetliKisi}</span><br><span>Tarih: ${z0.tarih||'___/___/______'}</span></div>
+      <div class="sign-box"><strong>Onaylayan</strong><span>(Yönetici)</span><br><br><br><span>${z0.onaylayan||'________________'}</span><br><span>Tarih: ___/___/______</span></div>
+    </div>
+    <div class="footer">${(S.sirket&&S.sirket.ad)||'FaOnSisT v5.0'} · Zimmet / Malzeme Teslim Tutanağı · Belge No: ${belgeNo} · ${new Date().toLocaleString('tr-TR')}</div>
     </body></html>`;
-    const frame=document.getElementById('print-frame');
-    const doc=frame.contentDocument||frame.contentWindow.document;
-    doc.open();doc.write(htmlContent);doc.close();
-    setTimeout(()=>{frame.contentWindow.focus();frame.contentWindow.print();},300);
+    dmrPrintBlob(htmlContent);
 }
 
 // ===================== FAZ 5: FAON-HR MODULU =====================
@@ -13347,7 +13471,16 @@ tr:nth-child(even){background:#f8fafc;}
 @media print{body{padding:20px 25px;}}`;
 
 function _belgeHeader(baslik,altBaslik){
-    return `<div class="header"><div class="logo">F<span>a</span>O<span>n</span>S<span>is</span>T</div><h1>${baslik}</h1>${altBaslik?'<h2>'+altBaslik+'</h2>':''}</div>`;
+    const s=S.sirket||{};const f=S.formAyarlari||{};
+    const renkMap={mavi:'#1e40af',kirmizi:'#dc2626',yesil:'#16a34a',turuncu:'#ea580c',mor:'#7c3aed',gri:'#374151'};
+    const renk=renkMap[f.renkTonu]||'#0f766e';
+    const sirketAd=s.ad||'FaOnSisT v5.0';
+    const logoHtml=(f.logoGoster!==false&&s.logoUrl)?`<img src="${s.logoUrl}" style="height:36px;object-fit:contain;margin-bottom:4px;">`:'';
+    return `<div class="header" style="border-bottom-color:${renk};">
+      ${logoHtml}
+      <div class="logo" style="color:${renk};">${sirketAd}</div>
+      <h1 style="color:${renk};">${baslik}</h1>${altBaslik?'<h2>'+altBaslik+'</h2>':''}
+    </div>`;
 }
 function _belgePersonelInfo(p,dept){
     const bugun=new Date().toISOString().slice(0,10);
@@ -13708,12 +13841,10 @@ function printHrBelgePaketi(personelId){
         const pageClass=idx>0?' class="page-break"':'';
         pages+=`<div${pageClass}>${generateHrBelgeHTML(sid,p)}</div>`;
     });
-    const fullHTML=`<!DOCTYPE html><html><head><title>Belge Paketi - ${p.ad} ${p.soyad}</title><style>${BELGE_STIL}</style></head><body>${pages}</body></html>`;
-    // iframe ile yazdir
-    const frame=document.getElementById('print-frame');
-    const doc=frame.contentDocument||frame.contentWindow.document;
-    doc.open();doc.write(fullHTML);doc.close();
-    setTimeout(()=>{frame.contentWindow.focus();frame.contentWindow.print();},400);
+    const ph=getPrintHeader('',p.ad+' '+p.soyad);
+    const belgeStilDinamik=BELGE_STIL.replace(/#0f766e/g,ph.renk);
+    const fullHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Belge Paketi - ${p.ad} ${p.soyad}</title><style>${belgeStilDinamik}\nscript{display:none;}</style></head><body>${pages}<script>setTimeout(()=>window.print(),600)<\/script></body></html>`;
+    dmrPrintBlob(fullHTML);
     // S.personelBelgeler'e kayit ekle
     if(!S.personelBelgeler)S.personelBelgeler=[];
     const bugun=new Date().toISOString().slice(0,10);
@@ -15363,33 +15494,26 @@ function printOdaListesi(forceMekanId){
           <td style="padding:7px 8px;text-align:right;font-weight:600;">${d.birimDeger?'₺'+d.birimDeger.toLocaleString('tr-TR'):'—'}</td>
         </tr>`;
     }).join('');
+    const ph = getPrintHeader('MEKAN DEMİRBAŞ LİSTESİ', baslik+(altBaslik?' — '+altBaslik:''));
+    const imzalar = getPrintImzalar('genel');
+    const cuName = currentUser?(currentUser.name||currentUser.ad||String(currentUser)):'________________';
+    const imzaHtml = imzalar.map((im,i)=>`<div class="sign-box" style="flex:1;border-top:1px solid #6b7280;padding-top:8px;font-size:12px;color:#374151;text-align:center;"><br><br><span style="color:${ph.renk};font-weight:600;">${im}</span><br>${i===0?cuName:'________________'}</div>`).join('');
     let htmlStr = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Mekan Demirbaş Listesi</title>
     <style>
-      body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;color:#111;}
-      .header{text-align:center;border-bottom:3px solid #1e40af;padding-bottom:16px;margin-bottom:20px;}
-      .header h1{font-size:20px;margin:0;color:#1e40af;letter-spacing:1px;}
-      .header h2{font-size:15px;margin:6px 0 4px;color:#111;}
-      .header p{font-size:12px;color:#6b7280;margin:2px 0;}
+      ${ph.css}
       .meta{display:flex;justify-content:space-between;margin-bottom:16px;font-size:12px;color:#374151;}
       table{width:100%;border-collapse:collapse;font-size:13px;}
-      thead tr{background:#1e40af;color:#fff;}
       thead th{padding:9px 8px;text-align:left;font-weight:600;font-size:12px;}
       tbody tr:nth-child(even){background:#f8fafc;}
       .footer{margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;}
-      .footer .total{font-size:15px;font-weight:700;color:#1e40af;text-align:right;margin-bottom:16px;}
+      .footer .total{font-size:15px;font-weight:700;color:${ph.renk};text-align:right;margin-bottom:16px;}
       .sign-area{display:flex;gap:40px;margin-top:20px;}
-      .sign-box{flex:1;border-top:1px solid #6b7280;padding-top:8px;font-size:12px;color:#374151;text-align:center;}
       @media print{body{padding:10px;} button{display:none!important;}}
     </style></head><body>
-    <div class="header">
-      <h1>🏢 MEKAN DEMİRBAŞ LİSTESİ</h1>
-      <h2>${baslik}${altBaslik?' — '+altBaslik:''}</h2>
-      ${depAd && !mekanId ? '' : `<p>Lokasyon: ${depAd||((S.depolar||[]).find(x=>x.id===(liste[0]||{}).depoId)||{}).ad||''}</p>`}
-      <p>Rapor Tarihi: ${tarih}</p>
-    </div>
+    ${ph.headerHtml}
     <div class="meta">
       <span>Toplam: <strong>${liste.length} adet</strong> demirbaş</span>
-      <span>FaOnSisT v5.0</span>
+      <span>Rapor Tarihi: ${tarih}</span>
     </div>
     <table>
       <thead><tr>
@@ -15405,12 +15529,8 @@ function printOdaListesi(forceMekanId){
     </table>
     <div class="footer">
       <div class="total">Toplam Değer: ₺${toplamDeger.toLocaleString('tr-TR')}</div>
-      <div class="sign-area">
-        <div class="sign-box"><br><br>Hazırlayan<br>${currentUser||'________________'}</div>
-        <div class="sign-box"><br><br>Kontrol Eden<br>________________</div>
-        <div class="sign-box"><br><br>Onaylayan<br>________________</div>
-      </div>
-      <p style="font-size:10px;color:#9ca3af;text-align:center;margin-top:16px;">FaOnSisT v5.0 · Mekan Demirbaş Listesi · ${tarih}</p>
+      <div class="sign-area">${imzaHtml}</div>
+      <p style="font-size:10px;color:#9ca3af;text-align:center;margin-top:16px;">${(S.sirket&&S.sirket.ad)||'FaOnSisT v5.0'} · Mekan Demirbaş Listesi · ${tarih}</p>
     </div>
     <script>setTimeout(()=>window.print(),600)<\/script>
     </body></html>`;
@@ -15461,38 +15581,31 @@ function printPersonelZimmetFisi(forcePId){
           <td style="padding:8px;text-align:right;font-weight:600;">${d.birimDeger?'₺'+d.birimDeger.toLocaleString('tr-TR'):'—'}</td>
         </tr>`;
     }).join('');
+    const ph2 = getPrintHeader('ZİMMET BELGESİ', 'Demirbaş Teslim ve Zimmet Formu');
+    const zimmetImzalar = getPrintImzalar('zimmet');
     let htmlStr = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Zimmet Belgesi</title>
     <style>
-      body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;color:#111;}
-      .header{border-bottom:3px solid #1e40af;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;}
-      .header-left h1{font-size:22px;margin:0 0 4px;color:#1e40af;letter-spacing:1px;}
-      .header-left p{font-size:12px;color:#6b7280;margin:2px 0;}
-      .header-right{text-align:right;font-size:12px;color:#374151;}
-      .header-right strong{display:block;font-size:14px;color:#111;}
+      ${ph2.css}
+      .belge-meta{text-align:right;font-size:12px;color:#374151;margin-bottom:18px;}
+      .belge-meta strong{display:block;font-size:14px;color:#111;}
       .info-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
       .info-row{font-size:13px;} .info-label{color:#6b7280;font-size:11px;}
       table{width:100%;border-collapse:collapse;font-size:13px;}
-      thead tr{background:#1e40af;color:#fff;}
       thead th{padding:9px 8px;text-align:left;font-size:12px;}
       tbody tr:nth-child(even){background:#f8fafc;}
       .footer{margin-top:24px;}
-      .total-row{text-align:right;font-size:15px;font-weight:700;color:#1e40af;padding:10px 8px;border-top:2px solid #1e40af;}
+      .total-row{text-align:right;font-size:15px;font-weight:700;color:${ph2.renk};padding:10px 8px;border-top:2px solid ${ph2.renk};}
       .sign-area{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px;border-top:1px solid #e5e7eb;padding-top:20px;}
       .sign-box{font-size:12px;color:#374151;}
-      .sign-box .sign-label{font-weight:600;margin-bottom:4px;}
+      .sign-label{font-weight:600;color:${ph2.renk};margin-bottom:4px;}
       .sign-line{border-bottom:1px solid #6b7280;margin:30px 0 6px;width:80%;}
       .disclaimer{margin-top:20px;font-size:10px;color:#9ca3af;border-top:1px dashed #e5e7eb;padding-top:10px;}
       @media print{body{padding:10px;}}
     </style></head><body>
-    <div class="header">
-      <div class="header-left">
-        <h1>ZİMMET BELGESİ</h1>
-        <p>Demirbaş Teslim ve Zimmet Formu</p>
-      </div>
-      <div class="header-right">
-        <strong>Belge No: ${belgeNo}</strong>
-        <span>Düzenleme Tarihi: ${tarih}</span>
-      </div>
+    ${ph2.headerHtml}
+    <div class="belge-meta">
+      <strong>Belge No: ${belgeNo}</strong>
+      <span>Düzenleme Tarihi: ${tarih}</span>
     </div>
     <div class="info-box">
       <div class="info-row"><div class="info-label">ZİMMETLİ KİŞİ</div><strong>${personelAd}</strong></div>
@@ -15517,13 +15630,13 @@ function printPersonelZimmetFisi(forcePId){
       <div class="total-row">Toplam Değer: ₺${toplamDeger.toLocaleString('tr-TR')}</div>
       <div class="sign-area">
         <div class="sign-box">
-          <div class="sign-label">TESLİM EDEN</div>
+          <div class="sign-label">${zimmetImzalar[0]||'TESLİM EDEN'}</div>
           <div class="sign-line"></div>
           Ad Soyad: ${currentUser||'________________'}<br>
           Tarih: ________________
         </div>
         <div class="sign-box">
-          <div class="sign-label">TESLİM ALAN (ZİMMETLİ)</div>
+          <div class="sign-label">${zimmetImzalar[1]||'TESLİM ALAN'}</div>
           <div class="sign-line"></div>
           Ad Soyad: ${personelAd}<br>
           Tarih: ________________
@@ -15532,7 +15645,7 @@ function printPersonelZimmetFisi(forcePId){
       <div class="disclaimer">
         Bu zimmet belgesi, yukarıda belirtilen demirbaşların teslim edildiğini ve zimmetlenenin sorumluluğunu kabul ettiğini belgelemektedir.
         Zimmetlenen kişi, demirbaşları eksiksiz ve çalışır durumda iade etmekle yükümlüdür.<br>
-        FaOnSisT v5.0 · ${tarih}
+        ${(S.sirket&&S.sirket.ad)||'FaOnSisT v5.0'} · ${tarih}
       </div>
     </div>
     <script>setTimeout(()=>window.print(),600)<\/script>
@@ -15563,6 +15676,363 @@ function dmrPrintBlob(htmlContent){
             document.body.removeChild(iframe);
         }
     };
+}
+
+// ═══════════════════════════════════════════════════
+// ŞİRKET PROFİLİ & FORM TASARIMI
+// ═══════════════════════════════════════════════════
+
+function renderSirketProfili(){
+    const c = document.getElementById('sirket-profili-view'); if(!c) return;
+    S.sirket = S.sirket||{ad:'',kisaAd:'',logoUrl:'',adres:'',telefon:'',email:'',vergiDairesi:'',vergiNo:'',mersisNo:'',web:''};
+    const s = S.sirket;
+    c.innerHTML = `
+    <div class="flex items-center gap-3 mb-5">
+      <span class="text-2xl">🏢</span>
+      <div>
+        <h4 class="font-bold text-sm">Şirket Profili</h4>
+        <p class="text-xs text-gray-400">Yazdırılabilir tüm formlarda şirket bilgileriniz otomatik görünür.</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <!-- Sol: Kimlik -->
+      <div class="space-y-3">
+        <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Şirket Kimliği</h5>
+        ${s.logoUrl ? `<div class="mb-2"><img src="${s.logoUrl}" style="height:48px;object-fit:contain;" class="rounded border border-gray-700 p-1 bg-white/5"><p class="text-xs text-gray-500 mt-1">Logo önizleme</p></div>` : ''}
+        <div>
+          <label class="block text-xs mb-1 text-gray-400">Şirket Adı (uzun) *</label>
+          <input type="text" id="sp-ad" value="${s.ad||''}" placeholder="Antigravity İnşaat Taahhüt A.Ş." class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs mb-1 text-gray-400">Kısa Ad</label>
+          <input type="text" id="sp-kisaAd" value="${s.kisaAd||''}" placeholder="Antigravity" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs mb-1 text-gray-400">Logo URL <span class="text-gray-500">(https://... veya /logo.png)</span></label>
+          <input type="text" id="sp-logoUrl" value="${s.logoUrl||''}" placeholder="https://example.com/logo.png" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" oninput="document.getElementById('sp-logo-preview').src=this.value||''">
+          <img id="sp-logo-preview" src="${s.logoUrl||''}" style="height:36px;object-fit:contain;margin-top:6px;${s.logoUrl?'':'display:none'}" class="rounded border border-gray-700 p-1 bg-white/5" onerror="this.style.display='none'" onload="this.style.display='block'">
+        </div>
+      </div>
+      <!-- Sağ: İletişim + Vergi -->
+      <div class="space-y-3">
+        <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">İletişim Bilgileri</h5>
+        <div>
+          <label class="block text-xs mb-1 text-gray-400">Adres</label>
+          <textarea id="sp-adres" rows="2" placeholder="Atatürk Cad. No:5, Kadıköy, İstanbul" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none resize-none">${s.adres||''}</textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs mb-1 text-gray-400">Telefon</label>
+            <input type="text" id="sp-telefon" value="${s.telefon||''}" placeholder="+90 212 555 00 00" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs mb-1 text-gray-400">E-posta</label>
+            <input type="text" id="sp-email" value="${s.email||''}" placeholder="info@sirket.com" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs mb-1 text-gray-400">Web Sitesi</label>
+          <input type="text" id="sp-web" value="${s.web||''}" placeholder="www.sirket.com" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+        </div>
+        <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-3 mb-2">Vergi / Resmi Bilgiler</h5>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs mb-1 text-gray-400">Vergi Dairesi</label>
+            <input type="text" id="sp-vergiDairesi" value="${s.vergiDairesi||''}" placeholder="Kadıköy VD" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs mb-1 text-gray-400">Vergi No</label>
+            <input type="text" id="sp-vergiNo" value="${s.vergiNo||''}" placeholder="1234567890" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs mb-1 text-gray-400">Mersis No <span class="text-gray-500">(opsiyonel)</span></label>
+          <input type="text" id="sp-mersisNo" value="${s.mersisNo||''}" placeholder="0123456789000001" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-5 pt-4 border-t border-gray-700/50">
+      <button onclick="saveSirketProfili()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">💾 Kaydet</button>
+      <button onclick="switchSettingsTab('formTasarimi')" class="px-4 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors text-gray-300">🎨 Form Tasarımına Git →</button>
+    </div>
+    <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+      <p class="text-xs text-blue-400">💡 <strong>İpucu:</strong> Şirket adı, adres ve logo tüm yazdırılabilir belgelerde (zimmet fişi, oda listesi, transfer belgesi vb.) otomatik olarak görünür.</p>
+    </div>`;
+}
+
+function saveSirketProfili(){
+    S.sirket = S.sirket||{};
+    S.sirket.ad = (document.getElementById('sp-ad')||{}).value||'';
+    S.sirket.kisaAd = (document.getElementById('sp-kisaAd')||{}).value||'';
+    S.sirket.logoUrl = (document.getElementById('sp-logoUrl')||{}).value||'';
+    S.sirket.adres = (document.getElementById('sp-adres')||{}).value||'';
+    S.sirket.telefon = (document.getElementById('sp-telefon')||{}).value||'';
+    S.sirket.email = (document.getElementById('sp-email')||{}).value||'';
+    S.sirket.web = (document.getElementById('sp-web')||{}).value||'';
+    S.sirket.vergiDairesi = (document.getElementById('sp-vergiDairesi')||{}).value||'';
+    S.sirket.vergiNo = (document.getElementById('sp-vergiNo')||{}).value||'';
+    S.sirket.mersisNo = (document.getElementById('sp-mersisNo')||{}).value||'';
+    save(); showNotif('Şirket profili kaydedildi. Tüm formlarda uygulanacak.');
+    act('Şirket profili güncellendi: '+S.sirket.ad);
+}
+
+function renderFormTasarimi(){
+    const c = document.getElementById('form-tasarimi-view'); if(!c) return;
+    S.formAyarlari = S.formAyarlari||{renkTonu:'mavi',yazıTipi:'segoe',kagitBoyutu:'A4',imzaHane1:'Hazırlayan',imzaHane2:'Kontrol Eden',imzaHane3:'Onaylayan',zimmetImza1:'Teslim Eden',zimmetImza2:'Teslim Alan',logoGoster:true,adresGoster:true,vergiNoGoster:false};
+    const f = S.formAyarlari;
+    const renkler = [
+        {id:'mavi', label:'Mavi', hex:'#1e40af'},
+        {id:'kirmizi', label:'Kırmızı', hex:'#dc2626'},
+        {id:'yesil', label:'Yeşil', hex:'#16a34a'},
+        {id:'turuncu', label:'Turuncu', hex:'#ea580c'},
+        {id:'mor', label:'Mor', hex:'#7c3aed'},
+        {id:'gri', label:'Kurumsal Gri', hex:'#374151'}
+    ];
+    const renkBtnler = renkler.map(r=>`
+      <button onclick="formTasBtnRenk('${r.id}')" id="ftr-btn-${r.id}"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all ${f.renkTonu===r.id?'border-white/50 bg-white/10':'border-gray-700 hover:border-gray-500'}"
+        style="${f.renkTonu===r.id?'box-shadow:0 0 0 2px '+r.hex:''}">
+        <span class="w-4 h-4 rounded-full flex-shrink-0" style="background:${r.hex}"></span>${r.label}
+      </button>`).join('');
+    const renkMap = {mavi:'#1e40af',kirmizi:'#dc2626',yesil:'#16a34a',turuncu:'#ea580c',mor:'#7c3aed',gri:'#374151'};
+    const prevRenk = renkMap[f.renkTonu]||'#1e40af';
+    const prevFont = f.yazıTipi==='georgia'?'Georgia,serif':f.yazıTipi==='arial'?'Arial,sans-serif':"'Segoe UI',Arial,sans-serif";
+    const sirketAd = (S.sirket&&S.sirket.ad)||'Şirket Adı';
+    c.innerHTML = `
+    <div class="flex items-center gap-3 mb-5">
+      <span class="text-2xl">🎨</span>
+      <div>
+        <h4 class="font-bold text-sm">Form & Belge Tasarımı</h4>
+        <p class="text-xs text-gray-400">Tüm yazdırılabilir belgeler için renk, yazı tipi ve imza hanelerini ayarlayın.</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Sol: Ayarlar -->
+      <div class="space-y-5">
+        <!-- Renk -->
+        <div>
+          <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Renk Tonu</h5>
+          <div class="flex flex-wrap gap-2" id="ftr-renk-container">${renkBtnler}</div>
+          <input type="hidden" id="ftr-renkTonu" value="${f.renkTonu||'mavi'}">
+        </div>
+        <!-- Yazı Tipi -->
+        <div>
+          <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Yazı Tipi</h5>
+          <select id="ftr-yaziTipi" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none" onchange="updateFormOnizleme()">
+            <option value="segoe" ${(f.yazıTipi||'segoe')==='segoe'?'selected':''}>Segoe UI (Modern)</option>
+            <option value="arial" ${f.yazıTipi==='arial'?'selected':''}>Arial (Sade)</option>
+            <option value="georgia" ${f.yazıTipi==='georgia'?'selected':''}>Georgia (Klasik)</option>
+          </select>
+        </div>
+        <!-- Kağıt Boyutu -->
+        <div>
+          <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Kağıt Boyutu</h5>
+          <div class="flex gap-3">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="ftr-kagit" id="ftr-kagit-a4" value="A4" ${(f.kagitBoyutu||'A4')==='A4'?'checked':''} class="accent-blue-500">
+              <span class="text-sm">A4 <span class="text-xs text-gray-500">(210×297mm)</span></span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="ftr-kagit" id="ftr-kagit-a5" value="A5" ${f.kagitBoyutu==='A5'?'checked':''} class="accent-blue-500">
+              <span class="text-sm">A5 <span class="text-xs text-gray-500">(148×210mm)</span></span>
+            </label>
+          </div>
+        </div>
+        <!-- İmza Haneleri - Genel -->
+        <div>
+          <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">İmza Haneleri — Genel Belgeler</h5>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 w-14">İmza 1:</span>
+              <input type="text" id="ftr-imza1" value="${f.imzaHane1||'Hazırlayan'}" class="flex-1 bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:outline-none" oninput="updateFormOnizleme()">
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 w-14">İmza 2:</span>
+              <input type="text" id="ftr-imza2" value="${f.imzaHane2||'Kontrol Eden'}" class="flex-1 bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:outline-none" oninput="updateFormOnizleme()">
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 w-14">İmza 3:</span>
+              <input type="text" id="ftr-imza3" value="${f.imzaHane3||'Onaylayan'}" class="flex-1 bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:outline-none" oninput="updateFormOnizleme()">
+            </div>
+          </div>
+        </div>
+        <!-- İmza Haneleri - Zimmet -->
+        <div>
+          <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">İmza Haneleri — Zimmet Fişi</h5>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 w-14">İmza 1:</span>
+              <input type="text" id="ftr-zimmet1" value="${f.zimmetImza1||'Teslim Eden'}" class="flex-1 bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:outline-none">
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500 w-14">İmza 2:</span>
+              <input type="text" id="ftr-zimmet2" value="${f.zimmetImza2||'Teslim Alan'}" class="flex-1 bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:outline-none">
+            </div>
+          </div>
+        </div>
+        <!-- Görünüm -->
+        <div>
+          <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Görünüm Seçenekleri</h5>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ftr-logoGoster" ${f.logoGoster!==false?'checked':''} class="accent-blue-500">
+              <span class="text-sm">Logo göster</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ftr-adresGoster" ${f.adresGoster!==false?'checked':''} class="accent-blue-500">
+              <span class="text-sm">Adres ve telefon göster</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="ftr-vergiNoGoster" ${f.vergiNoGoster?'checked':''} class="accent-blue-500">
+              <span class="text-sm">Vergi No göster</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <!-- Sağ: Önizleme -->
+      <div>
+        <h5 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Canlı Önizleme</h5>
+        <div id="form-onizleme" class="rounded-xl border border-gray-700 bg-white p-4 text-gray-900" style="font-family:${prevFont};min-height:280px;">
+          <div style="border-bottom:3px solid ${prevRenk};padding-bottom:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:${prevRenk};">${sirketAd}</div>
+              <div style="font-size:10px;color:#6b7280;">${(S.sirket&&S.sirket.adres)||'Şirket adresi · Telefon'}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:14px;font-weight:700;color:${prevRenk};">ZİMMET BELGESİ</div>
+              <div style="font-size:11px;color:#374151;">${new Date().toLocaleDateString('tr-TR')}</div>
+            </div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;">
+            <thead><tr style="background:${prevRenk};color:#fff;"><th style="padding:6px;text-align:left;">Demirbaş</th><th style="padding:6px;text-align:left;">Barkod</th><th style="padding:6px;text-align:right;">Değer</th></tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:5px;">Örnek Demirbaş</td><td style="padding:5px;">DMR-2026-0001</td><td style="padding:5px;text-align:right;">₺45.000</td></tr>
+              <tr style="border-bottom:1px solid #e5e7eb;background:#f8fafc;"><td style="padding:5px;">Ofis Sandalyesi</td><td style="padding:5px;">DMR-2026-0002</td><td style="padding:5px;text-align:right;">₺2.500</td></tr>
+            </tbody>
+          </table>
+          <div style="display:flex;gap:20px;border-top:1px solid #e5e7eb;padding-top:12px;" id="oniz-imzalar">
+            <div style="flex:1;border-top:1px solid #9ca3af;padding-top:6px;font-size:10px;color:#374151;text-align:center;"><strong style="color:${prevRenk};">${f.imzaHane1||'Hazırlayan'}</strong><br><br>________________</div>
+            <div style="flex:1;border-top:1px solid #9ca3af;padding-top:6px;font-size:10px;color:#374151;text-align:center;"><strong style="color:${prevRenk};">${f.imzaHane2||'Kontrol Eden'}</strong><br><br>________________</div>
+            <div style="flex:1;border-top:1px solid #9ca3af;padding-top:6px;font-size:10px;color:#374151;text-align:center;"><strong style="color:${prevRenk};">${f.imzaHane3||'Onaylayan'}</strong><br><br>________________</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-5 pt-4 border-t border-gray-700/50">
+      <button onclick="saveFormTasarimi()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">💾 Kaydet</button>
+      <button onclick="switchSettingsTab('sirketProfili')" class="px-4 py-2.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors text-gray-300">← Şirket Profili</button>
+    </div>`;
+}
+
+function formTasBtnRenk(id){
+    document.getElementById('ftr-renkTonu').value = id;
+    document.querySelectorAll('[id^="ftr-btn-"]').forEach(b=>{
+        b.classList.toggle('border-white/50',b.id==='ftr-btn-'+id);
+        b.classList.toggle('bg-white/10',b.id==='ftr-btn-'+id);
+        b.classList.toggle('border-gray-700',b.id!=='ftr-btn-'+id);
+        b.style.boxShadow = '';
+    });
+    const renkMap = {mavi:'#1e40af',kirmizi:'#dc2626',yesil:'#16a34a',turuncu:'#ea580c',mor:'#7c3aed',gri:'#374151'};
+    const btn = document.getElementById('ftr-btn-'+id);
+    if(btn) btn.style.boxShadow = '0 0 0 2px '+(renkMap[id]||'#1e40af');
+    updateFormOnizleme();
+}
+
+function updateFormOnizleme(){
+    const renk = (function(){
+        const renkMap={mavi:'#1e40af',kirmizi:'#dc2626',yesil:'#16a34a',turuncu:'#ea580c',mor:'#7c3aed',gri:'#374151'};
+        return renkMap[(document.getElementById('ftr-renkTonu')||{}).value||'mavi']||'#1e40af';
+    })();
+    const imza1 = (document.getElementById('ftr-imza1')||{}).value||'Hazırlayan';
+    const imza2 = (document.getElementById('ftr-imza2')||{}).value||'Kontrol Eden';
+    const imza3 = (document.getElementById('ftr-imza3')||{}).value||'Onaylayan';
+    const yaziTipi = (document.getElementById('ftr-yaziTipi')||{}).value||'segoe';
+    const font = yaziTipi==='georgia'?'Georgia,serif':yaziTipi==='arial'?'Arial,sans-serif':"'Segoe UI',Arial,sans-serif";
+    const sirketAd = (S.sirket&&S.sirket.ad)||'Şirket Adı';
+    const adres = (S.sirket&&S.sirket.adres)||'Şirket adresi · Telefon';
+    const el = document.getElementById('form-onizleme'); if(!el) return;
+    el.style.fontFamily = font;
+    el.innerHTML = `
+      <div style="border-bottom:3px solid ${renk};padding-bottom:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:${renk};">${sirketAd}</div>
+          <div style="font-size:10px;color:#6b7280;">${adres}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:14px;font-weight:700;color:${renk};">ZİMMET BELGESİ</div>
+          <div style="font-size:11px;color:#374151;">${new Date().toLocaleDateString('tr-TR')}</div>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px;">
+        <thead><tr style="background:${renk};color:#fff;"><th style="padding:6px;text-align:left;">Demirbaş</th><th style="padding:6px;text-align:left;">Barkod</th><th style="padding:6px;text-align:right;">Değer</th></tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:5px;">Örnek Demirbaş</td><td style="padding:5px;">DMR-2026-0001</td><td style="padding:5px;text-align:right;">₺45.000</td></tr>
+          <tr style="border-bottom:1px solid #e5e7eb;background:#f8fafc;"><td style="padding:5px;">Ofis Sandalyesi</td><td style="padding:5px;">DMR-2026-0002</td><td style="padding:5px;text-align:right;">₺2.500</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;gap:20px;border-top:1px solid #e5e7eb;padding-top:12px;">
+        <div style="flex:1;border-top:1px solid #9ca3af;padding-top:6px;font-size:10px;color:#374151;text-align:center;"><strong style="color:${renk};">${imza1}</strong><br><br>________________</div>
+        <div style="flex:1;border-top:1px solid #9ca3af;padding-top:6px;font-size:10px;color:#374151;text-align:center;"><strong style="color:${renk};">${imza2}</strong><br><br>________________</div>
+        <div style="flex:1;border-top:1px solid #9ca3af;padding-top:6px;font-size:10px;color:#374151;text-align:center;"><strong style="color:${renk};">${imza3}</strong><br><br>________________</div>
+      </div>`;
+}
+
+function saveFormTasarimi(){
+    S.formAyarlari = S.formAyarlari||{};
+    S.formAyarlari.renkTonu = (document.getElementById('ftr-renkTonu')||{}).value||'mavi';
+    S.formAyarlari.yazıTipi = (document.getElementById('ftr-yaziTipi')||{}).value||'segoe';
+    S.formAyarlari.kagitBoyutu = document.querySelector('[name="ftr-kagit"]:checked')?.value||'A4';
+    S.formAyarlari.imzaHane1 = (document.getElementById('ftr-imza1')||{}).value||'Hazırlayan';
+    S.formAyarlari.imzaHane2 = (document.getElementById('ftr-imza2')||{}).value||'Kontrol Eden';
+    S.formAyarlari.imzaHane3 = (document.getElementById('ftr-imza3')||{}).value||'Onaylayan';
+    S.formAyarlari.zimmetImza1 = (document.getElementById('ftr-zimmet1')||{}).value||'Teslim Eden';
+    S.formAyarlari.zimmetImza2 = (document.getElementById('ftr-zimmet2')||{}).value||'Teslim Alan';
+    S.formAyarlari.logoGoster = (document.getElementById('ftr-logoGoster')||{}).checked!==false;
+    S.formAyarlari.adresGoster = (document.getElementById('ftr-adresGoster')||{}).checked!==false;
+    S.formAyarlari.vergiNoGoster = !!((document.getElementById('ftr-vergiNoGoster')||{}).checked);
+    save(); showNotif('Form tasarımı kaydedildi. Tüm belgeler güncellendi.');
+    act('Form tasarımı güncellendi: '+S.formAyarlari.renkTonu+' ton');
+}
+
+// ── Ortak Print Yardımcı Fonksiyonları ──
+function getPrintHeader(baslik, altBaslik){
+    const s = S.sirket||{};
+    const f = S.formAyarlari||{};
+    const renkMap={mavi:'#1e40af',kirmizi:'#dc2626',yesil:'#16a34a',turuncu:'#ea580c',mor:'#7c3aed',gri:'#374151'};
+    const renk = renkMap[f.renkTonu]||'#1e40af';
+    const font = f.yazıTipi==='georgia'?'Georgia,serif':f.yazıTipi==='arial'?'Arial,sans-serif':"'Segoe UI',Arial,sans-serif";
+    const logoHtml = (f.logoGoster!==false && s.logoUrl) ? `<img src="${s.logoUrl}" style="height:48px;object-fit:contain;margin-bottom:6px;display:block;">` : '';
+    const adresHtml = (f.adresGoster!==false && s.adres) ? `<div style="font-size:10px;color:#6b7280;margin-top:2px;">${s.adres}${s.telefon?' · '+s.telefon:''}</div>` : '';
+    const vergiHtml = (f.vergiNoGoster && s.vergiNo) ? `<div style="font-size:10px;color:#6b7280;">Vergi No: ${s.vergiNo}${s.vergiDairesi?' / '+s.vergiDairesi:''}</div>` : '';
+    return {
+        renk, font,
+        css:`body{font-family:${font};margin:0;padding:20px;color:#111;}
+             .print-header{border-bottom:3px solid ${renk};padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
+             .print-co{font-size:${s.ad?'18px':'0px'};font-weight:700;color:${renk};}
+             table{width:100%;border-collapse:collapse;font-size:13px;}
+             thead tr{background:${renk};color:#fff;}
+             thead th{padding:9px 8px;text-align:left;font-weight:600;font-size:12px;}
+             tbody tr:nth-child(even){background:#f8fafc;}
+             .sign-label{color:${renk};font-weight:600;}
+             @media print{body{padding:10px;}}`,
+        headerHtml:`<div class="print-header">
+          <div>
+            ${logoHtml}
+            <div class="print-co">${s.ad||'FaOnSisT v5.0'}</div>
+            ${adresHtml}${vergiHtml}
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:16px;font-weight:700;color:${renk};">${baslik}</div>
+            ${altBaslik?`<div style="font-size:12px;color:#374151;margin-top:3px;">${altBaslik}</div>`:''}
+          </div>
+        </div>`
+    };
+}
+
+function getPrintImzalar(tip){
+    const f = S.formAyarlari||{};
+    if(tip==='zimmet') return [f.zimmetImza1||'Teslim Eden', f.zimmetImza2||'Teslim Alan'];
+    return [f.imzaHane1||'Hazırlayan', f.imzaHane2||'Kontrol Eden', f.imzaHane3||'Onaylayan'];
 }
 
 </script>
