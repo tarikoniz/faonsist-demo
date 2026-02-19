@@ -1257,6 +1257,14 @@
                         </div>
                     </div><!-- /AI Chat Ana Alani -->
                     </div><!-- /connect-ai-view -->
+                    <!-- Meetings View -->
+                    <div id="connect-meetings-view" class="flex-1 flex-col hidden overflow-hidden">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700/50 flex-shrink-0">
+                            <h3 class="text-sm font-semibold flex items-center gap-2">📅 Toplantilar</h3>
+                            <button onclick="openMeetingForm()" class="px-3 py-1.5 bg-green-600/20 text-green-400 hover:bg-green-600/40 border border-green-500/20 rounded-lg text-xs transition-colors">+ Yeni Toplanti</button>
+                        </div>
+                        <div id="meetings-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+                    </div><!-- /connect-meetings-view -->
                 </div>
             </div>
 
@@ -2207,6 +2215,42 @@
         </form>
     </div>
 </div>
+<!-- Channel Settings Modal -->
+<div id="modal-channel-settings" class="modal">
+    <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold">⚙️ Kanal Ayarlari</h3>
+            <button onclick="closeModal('modal-channel-settings')" class="text-gray-400 hover:text-white text-lg">×</button>
+        </div>
+        <input type="hidden" id="channel-settings-id" value="">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs mb-1.5 text-gray-400">Kanal Adi *</label>
+                <input type="text" id="channel-settings-name" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-4 py-2.5 text-sm" placeholder="kanal-adi">
+            </div>
+            <div>
+                <label class="block text-xs mb-1.5 text-gray-400">Aciklama</label>
+                <textarea id="channel-settings-desc" rows="3" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-4 py-2.5 text-sm" placeholder="Bu kanal ne icin kullaniliyor?"></textarea>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="saveChannelSettings()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-medium text-sm transition-colors">💾 Kaydet</button>
+                <button onclick="archiveChannel(document.getElementById('channel-settings-id').value)" class="px-4 bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-600/30 text-yellow-400 py-2.5 rounded-lg text-sm transition-colors">🗄️ Arsivle</button>
+                <button onclick="closeModal('modal-channel-settings')" class="px-4 bg-gray-700 hover:bg-gray-600 py-2.5 rounded-lg text-sm transition-colors">Iptal</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- DM User Select Modal -->
+<div id="modal-dm-user" class="modal">
+    <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold">💬 Direkt Mesaj Baslat</h3>
+            <button onclick="closeModal('modal-dm-user')" class="text-gray-400 hover:text-white text-lg">×</button>
+        </div>
+        <p class="text-xs text-gray-400 mb-4">Mesaj gondermek istediginiz kisiye tiklayin:</p>
+        <div id="dm-user-list" class="space-y-2"></div>
+    </div>
+</div>
 <!-- Channel Members Modal -->
 <div id="modal-members" class="modal">
     <div class="glass-strong rounded-2xl p-6 w-full max-w-md">
@@ -2339,10 +2383,11 @@
 <div id="modal-create-meeting" class="modal">
     <div class="modal-content" style="max-width:500px;">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold flex items-center gap-2">📅 Yeni Toplanti</h3>
+            <h3 id="meeting-modal-title" class="text-lg font-bold flex items-center gap-2">📅 Yeni Toplanti</h3>
             <button onclick="closeModal(&#39;modal-create-meeting&#39;)" class="text-gray-400 hover:text-white">×</button>
         </div>
         <form onsubmit="addMeeting(event)" class="space-y-3">
+            <input type="hidden" id="meeting-edit-id" value="">
             <div><label class="block text-xs mb-1 text-gray-400">Baslik *</label><input name="meetingTitle" required="" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm" placeholder="Toplanti basligi"></div>
             <div><label class="block text-xs mb-1 text-gray-400">Aciklama</label><textarea name="meetingDesc" rows="2" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm" placeholder="Opsiyonel aciklama"></textarea></div>
             <div class="grid grid-cols-2 gap-3">
@@ -2351,7 +2396,7 @@
             </div>
             <div><label class="block text-xs mb-1 text-gray-400">Katilimcilar (virgul ile)</label><input name="meetingParticipants" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm" placeholder="Tarik Oniz, Mehmet Kaya"></div>
             <div><label class="block text-xs mb-1 text-gray-400">Kanal</label><select name="meetingChannel" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm"><option value="">Kanal secin (opsiyonel)</option></select></div>
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg text-sm font-medium transition-colors">Toplanti Olustur</button>
+            <button id="meeting-submit-btn" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg text-sm font-medium transition-colors">Toplanti Olustur</button>
         </form>
     </div>
 </div>
@@ -4493,7 +4538,7 @@ function addChannel(e){
     e.preventDefault();const f=new FormData(e.target);const n=f.get('channelName').toLowerCase().replace(/\s+/g,'-');
     if(S.channels.find(c=>c.id===n)){showNotif('Bu kanal zaten var!');return;}
     const creator=currentUser?currentUser.name:'Tarik Oniz';
-    S.channels.push({id:n,name:n,members:1,type:'channel',memberList:[creator]});S.messages[n]=[];
+    S.channels.push({id:n,name:n,members:1,type:'channel',memberList:[creator],description:'',archived:false,createdAt:new Date().toISOString(),createdBy:creator,isFavorite:false});S.messages[n]=[];
     act('Yeni kanal: #'+n);save();renderChannels();closeModal('modal-channel');e.target.reset();showNotif('Kanal olusturuldu!');
 }
 
@@ -5001,14 +5046,116 @@ function updateBadges(){
 }
 
 // ===================== CONNECT =====================
+
+function markChannelRead(chId){
+    if(!S.lastReadTime)S.lastReadTime={};
+    S.lastReadTime[chId]=Date.now();
+    save();
+}
+
+function getUnreadCount(chId){
+    if(!S.lastReadTime)return 0;
+    const lastRead=S.lastReadTime[chId]||0;
+    const msgs=S.messages[chId]||[];
+    return msgs.filter(m=>{
+        if(!m.time&&!m.timestamp)return false;
+        const msgTime=new Date(m.time||m.timestamp).getTime();
+        return msgTime>lastRead;
+    }).length;
+}
+
+function toggleFavorite(chId,e){
+    if(e){e.stopPropagation();}
+    const ch=S.channels.find(x=>x.id===chId);
+    if(!ch)return;
+    ch.isFavorite=!ch.isFavorite;
+    save();renderChannels();
+}
+
+function openChannelSettings(chId,e){
+    if(e){e.stopPropagation();}
+    const ch=S.channels.find(x=>x.id===chId);
+    if(!ch)return;
+    document.getElementById('channel-settings-id').value=chId;
+    document.getElementById('channel-settings-name').value=ch.name||'';
+    document.getElementById('channel-settings-desc').value=ch.description||'';
+    openModal('modal-channel-settings');
+}
+
+function saveChannelSettings(){
+    const chId=document.getElementById('channel-settings-id').value;
+    const newName=document.getElementById('channel-settings-name').value.trim().toLowerCase().replace(/\s+/g,'-');
+    const newDesc=document.getElementById('channel-settings-desc').value.trim();
+    if(!newName){showNotif('Kanal adi bos olamaz!');return;}
+    const ch=S.channels.find(x=>x.id===chId);
+    if(!ch)return;
+    ch.name=newName;
+    ch.description=newDesc;
+    save();renderChannels();closeModal('modal-channel-settings');
+    showNotif('Kanal guncellendi: #'+newName);
+}
+
+function archiveChannel(chId){
+    if(!chId)return;
+    const ch=S.channels.find(x=>x.id===chId);
+    if(!ch)return;
+    if(!confirm('#'+ch.name+' kanalini arsivlemek istediginizden emin misiniz?'))return;
+    ch.archived=true;
+    if(S.currentChannel===chId){
+        const first=S.channels.find(x=>!x.archived&&x.type!=='dm');
+        S.currentChannel=first?first.id:'genel';
+    }
+    save();renderChannels();closeModal('modal-channel-settings');
+    showNotif('#'+ch.name+' arsivlendi.');
+}
+
+function renderChannelItem(ch){
+    const isDm=ch.type==='dm';
+    const isActive=S.currentChannel===ch.id;
+    const unread=getUnreadCount(ch.id);
+    const prefix=isDm?'<span class="text-sm">💬</span>':'<span class="text-sm">#</span>';
+    const displayName=isDm?(ch.displayName||ch.name):ch.name;
+    const favBtn=isDm?'':` <button onclick="toggleFavorite('${ch.id}',event)" class="opacity-0 group-hover:opacity-100 text-[10px] ${ch.isFavorite?'text-yellow-400 opacity-100':'text-gray-600'} hover:text-yellow-400 transition-opacity" title="${ch.isFavorite?'Favoriden cikar':'Favorilere ekle'}">${ch.isFavorite?'⭐':'☆'}</button>`;
+    const settingsBtn=isDm?'':` <button onclick="openChannelSettings('${ch.id}',event)" class="opacity-0 group-hover:opacity-100 text-[10px] text-gray-500 hover:text-gray-300 transition-opacity" title="Kanal ayarlari">⋯</button>`;
+    const badge=unread>0?`<span class="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold min-w-[18px] text-center">${unread}</span>`:((!isDm&&(S.messages[ch.id]||[]).length>0)?`<span class="text-[9px] bg-gray-700 px-1.5 py-0.5 rounded-full">${(S.messages[ch.id]||[]).length}</span>`:'');
+    return `<div onclick="selectChannel('${ch.id}')" class="group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${isActive?'bg-blue-500/10 text-blue-400':'hover:bg-gray-800/30 text-gray-400'} ${unread>0&&!isActive?'font-semibold text-white':''}">
+        ${prefix}<span class="text-xs flex-1 truncate">${displayName}</span>${favBtn}${settingsBtn}${badge}
+    </div>`;
+}
+
 function renderChannels(){
     const c=document.getElementById('channel-list');
-    c.innerHTML=S.channels.map(ch=>`<div onclick="selectChannel('${ch.id}')" class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${S.currentChannel===ch.id?'bg-blue-500/10 text-blue-400':'hover:bg-gray-800/30 text-gray-400'}">
-        <span class="text-sm">#</span><span class="text-xs flex-1">${ch.name}</span>
-        ${(S.messages[ch.id]||[]).length>0?`<span class="text-[9px] bg-gray-700 px-1.5 py-0.5 rounded-full">${(S.messages[ch.id]||[]).length}</span>`:''}
-    </div>`).join('');
+    if(!c)return;
+    // Mevcut kanallara eksik alanları ekle (migration)
+    S.channels.forEach(ch=>{
+        if(ch.archived===undefined)ch.archived=false;
+        if(ch.isFavorite===undefined)ch.isFavorite=false;
+        if(ch.type===undefined)ch.type='channel';
+        if(ch.description===undefined)ch.description='';
+    });
+
+    const favoriler=S.channels.filter(ch=>ch.isFavorite&&!ch.archived&&ch.type!=='dm');
+    const normalKanallar=S.channels.filter(ch=>!ch.isFavorite&&!ch.archived&&ch.type!=='dm');
+    const dmKanallar=S.channels.filter(ch=>ch.type==='dm'&&!ch.archived);
+
+    let html='';
+    if(favoriler.length>0){
+        html+=`<div class="px-3 py-1 text-[9px] text-yellow-500/70 font-semibold tracking-wider uppercase mt-1">⭐ Favoriler</div>`;
+        html+=favoriler.map(renderChannelItem).join('');
+    }
+    if(normalKanallar.length>0){
+        html+=`<div class="px-3 py-1 text-[9px] text-gray-500 font-semibold tracking-wider uppercase ${favoriler.length>0?'mt-2':'mt-1'}">Kanallar</div>`;
+        html+=normalKanallar.map(renderChannelItem).join('');
+    }
+    if(dmKanallar.length>0){
+        html+=`<div class="px-3 py-1 text-[9px] text-gray-500 font-semibold tracking-wider uppercase mt-2">Direkt Mesajlar</div>`;
+        html+=dmKanallar.map(renderChannelItem).join('');
+    }
+    html+=`<div class="px-3 py-1 mt-1"><button onclick="openDmUserList()" class="w-full text-[10px] text-center py-1.5 rounded-lg bg-gray-700/30 text-gray-500 hover:bg-gray-700/60 hover:text-gray-300 transition-colors">+ Yeni DM</button></div>`;
+    c.innerHTML=html;
     renderMessages();
 }
+
 function selectChannel(id){
     if(socket&&socket.connected){
         socket.emit('channel:leave',{channelId:S.currentChannel});
@@ -5018,7 +5165,13 @@ function selectChannel(id){
     typingUsers.clear();
     const ti=document.getElementById('typing-indicator');
     if(ti)ti.classList.add('hidden');
-    renderChannels();
+    markChannelRead(id);
+    // Her zaman chat view'ına geç
+    if(typeof connViewMode!=='undefined'&&connViewMode!=='chat'){
+        switchConnectView('chat');
+    } else {
+        renderChannels();
+    }
 }
 function getDateLabel(dateStr){
     if(!dateStr)return '';
@@ -5036,9 +5189,14 @@ function getDateLabel(dateStr){
 function renderMessages(){
     const c=document.getElementById('chat-messages');
     const ch=S.channels.find(x=>x.id===S.currentChannel);
-    document.getElementById('chat-header-name').textContent='# '+(ch?ch.name:'');
-    const memberCount=ch?(ch.memberList?ch.memberList.length:ch.members):0;
-    document.getElementById('chat-header-info').querySelector('span').textContent=memberCount+' uye';
+    if(ch&&ch.type==='dm'){
+        document.getElementById('chat-header-name').textContent='💬 '+(ch.displayName||ch.name);
+        document.getElementById('chat-header-info').querySelector('span').textContent='Direkt Mesaj';
+    } else {
+        document.getElementById('chat-header-name').textContent='# '+(ch?ch.name:'');
+        const memberCount=ch?(ch.memberList?ch.memberList.length:ch.members):0;
+        document.getElementById('chat-header-info').querySelector('span').textContent=memberCount+' uye';
+    }
     const msgs=S.messages[S.currentChannel]||[];
     if(msgs.length===0){
         c.innerHTML='<p class="text-center text-gray-500 text-xs py-8">Henuz mesaj yok. Ilk mesaji siz gonderin!</p>';
@@ -7186,9 +7344,11 @@ function switchConnectView(mode){
     const chatView=document.getElementById('connect-chat-view');
     const filesView=document.getElementById('connect-files-view');
     const aiView=document.getElementById('connect-ai-view');
+    const meetingsView=document.getElementById('connect-meetings-view');
     chatView.classList.add('hidden');
     filesView.classList.add('hidden');
     aiView.classList.add('hidden');
+    if(meetingsView)meetingsView.classList.add('hidden');
     if(mode==='files'){
         filesView.classList.remove('hidden');
         renderConnFiles();
@@ -7196,9 +7356,13 @@ function switchConnectView(mode){
     } else if(mode==='ai'){
         aiView.classList.remove('hidden');
     } else if(mode==='meetings'){
-        openModal('modal-create-meeting');
-        // Stay on chat view
-        chatView.classList.remove('hidden');
+        if(meetingsView){
+            meetingsView.classList.remove('hidden');
+            renderMeetings();
+        } else {
+            chatView.classList.remove('hidden');
+            openModal('modal-create-meeting');
+        }
     } else {
         chatView.classList.remove('hidden');
     }
@@ -8196,6 +8360,69 @@ function updateChannelBadge(chId){
     renderChannels();
 }
 
+// ===================== DM (DIRECT MESSAGE) =====================
+function getDmChannelId(u1,u2){
+    const sorted=[u1,u2].sort();
+    return 'dm_'+sorted[0].toLowerCase().replace(/\s+/g,'_')+'_'+sorted[1].toLowerCase().replace(/\s+/g,'_');
+}
+
+function openDmUserList(){
+    const myName=currentUser?currentUser.name:'';
+    const others=(S.users||[]).filter(u=>u.name!==myName&&u.active!==false);
+    const el=document.getElementById('dm-user-list');
+    if(!el)return;
+    if(others.length===0){
+        el.innerHTML='<p class="text-xs text-gray-500">Baska kullanici bulunamadi.</p>';
+    } else {
+        el.innerHTML=others.map(u=>{
+            const chId=getDmChannelId(myName,u.name);
+            const exists=S.channels.find(c=>c.id===chId);
+            const unread=getUnreadCount(chId);
+            const initials=u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+            return `<div onclick="startDm('${u.name}')" class="flex items-center gap-3 p-3 rounded-xl bg-gray-800/50 hover:bg-gray-700/60 cursor-pointer transition-colors">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold flex-shrink-0">${initials}</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate">${u.name}</p>
+                    <p class="text-[10px] text-gray-400">${u.role||''}</p>
+                </div>
+                ${unread>0?`<span class="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">${unread}</span>`:''}
+                ${exists?'<span class="text-[9px] text-gray-500">Devam Et</span>':'<span class="text-[9px] text-green-400">Yeni</span>'}
+            </div>`;
+        }).join('');
+    }
+    openModal('modal-dm-user');
+}
+
+function startDm(targetUserName){
+    const myName=currentUser?currentUser.name:'Tarik Oniz';
+    const chId=getDmChannelId(myName,targetUserName);
+    // Zaten yoksa olustur
+    if(!S.channels.find(c=>c.id===chId)){
+        S.channels.push({
+            id:chId,
+            name:chId,
+            displayName:targetUserName,
+            type:'dm',
+            members:2,
+            memberList:[myName,targetUserName],
+            description:'',
+            archived:false,
+            isFavorite:false,
+            createdAt:new Date().toISOString(),
+            createdBy:myName
+        });
+        S.messages[chId]=[];
+        save();
+    }
+    closeModal('modal-dm-user');
+    selectChannel(chId);
+    // Baslik guncelle
+    setTimeout(()=>{
+        const headerEl=document.getElementById('channel-name-display');
+        if(headerEl)headerEl.textContent='💬 '+targetUserName;
+    },100);
+}
+
 // ---- Typing indicators ----
 const typingUsers=new Set();
 
@@ -8511,31 +8738,86 @@ function renderMeetingCard(m,past){
     const dateStr=start.toLocaleDateString('tr-TR',{day:'2-digit',month:'short'});
     const timeStr=start.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})+' - '+end.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
     const parts=Array.isArray(m.participants)?m.participants:[];
-    return '<div class="glass rounded-xl p-3 '+(past?'opacity-60':'')+'"><div class="flex items-start justify-between"><div class="flex-1"><p class="text-xs font-semibold">'+m.title+'</p><p class="text-[10px] text-gray-400 mt-0.5">'+dateStr+' \u00B7 '+timeStr+'</p>'+(m.description?'<p class="text-[10px] text-gray-500 mt-1">'+m.description+'</p>':'')+'</div><div class="flex gap-1">'+(past?'':'<button onclick="deleteMeeting('+m.id+')" class="w-6 h-6 rounded bg-gray-700 hover:bg-red-600 text-[10px] text-gray-400 flex items-center justify-center">&times;</button>')+'</div></div>'+(parts.length>0?'<div class="flex items-center gap-1 mt-2"><span class="text-[9px] text-gray-500">Katilimcilar:</span><span class="text-[10px] text-gray-400">'+parts.join(', ')+'</span></div>':'')+(m.channelId?'<span class="text-[9px] text-blue-400 mt-1 inline-block">#'+m.channelId+'</span>':'')+'</div>';
+    return '<div class="glass rounded-xl p-3 '+(past?'opacity-60':'')+'"><div class="flex items-start justify-between"><div class="flex-1"><p class="text-xs font-semibold">'+m.title+'</p><p class="text-[10px] text-gray-400 mt-0.5">'+dateStr+' \u00B7 '+timeStr+'</p>'+(m.description?'<p class="text-[10px] text-gray-500 mt-1">'+m.description+'</p>':'')+'</div><div class="flex gap-1">'+(past?'':'<button onclick="editMeeting('+m.id+')" class="w-6 h-6 rounded bg-gray-700 hover:bg-blue-600 text-[10px] text-gray-400 flex items-center justify-center" title="Duzenle">✏️</button><button onclick="deleteMeeting('+m.id+')" class="w-6 h-6 rounded bg-gray-700 hover:bg-red-600 text-[10px] text-gray-400 flex items-center justify-center" title="Sil">&times;</button>')+'</div></div>'+(parts.length>0?'<div class="flex items-center gap-1 mt-2"><span class="text-[9px] text-gray-500">Katilimcilar:</span><span class="text-[10px] text-gray-400">'+parts.join(', ')+'</span></div>':'')+(m.channelId?'<span class="text-[9px] text-blue-400 mt-1 inline-block">#'+m.channelId+'</span>':'')+'</div>';
 }
 
-function openMeetingForm(){openModal('modal-create-meeting');}
+function openMeetingForm(){
+    // Yeni toplanti modunu sifirla
+    document.getElementById('meeting-edit-id').value='';
+    document.getElementById('meeting-modal-title').textContent='📅 Yeni Toplanti';
+    document.getElementById('meeting-submit-btn').textContent='Toplanti Olustur';
+    document.querySelector('[name="meetingTitle"]').value='';
+    document.querySelector('[name="meetingDesc"]').value='';
+    document.querySelector('[name="meetingStart"]').value='';
+    document.querySelector('[name="meetingEnd"]').value='';
+    document.querySelector('[name="meetingParticipants"]').value='';
+    document.querySelector('[name="meetingChannel"]').value='';
+    openModal('modal-create-meeting');
+}
+
+function editMeeting(id){
+    if(!S.meetings)return;
+    const m=S.meetings.find(x=>x.id===id);
+    if(!m)return;
+    // Formu doldur
+    document.getElementById('meeting-edit-id').value=id;
+    document.getElementById('meeting-modal-title').textContent='✏️ Toplanti Duzenle';
+    document.getElementById('meeting-submit-btn').textContent='Degisiklikleri Kaydet';
+    document.querySelector('[name="meetingTitle"]').value=m.title||'';
+    document.querySelector('[name="meetingDesc"]').value=m.description||'';
+    // datetime-local formatı: YYYY-MM-DDTHH:mm
+    const toLocal=dt=>{if(!dt)return'';const d=new Date(dt);const pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());};
+    document.querySelector('[name="meetingStart"]').value=toLocal(m.startTime);
+    document.querySelector('[name="meetingEnd"]').value=toLocal(m.endTime);
+    document.querySelector('[name="meetingParticipants"]').value=Array.isArray(m.participants)?m.participants.join(', '):'';
+    const selCh=document.querySelector('[name="meetingChannel"]');
+    if(selCh)selCh.value=m.channelId||'';
+    openModal('modal-create-meeting');
+}
 
 function addMeeting(e){
     e.preventDefault();
     const f=new FormData(e.target);
-    const meeting={
-        id:Date.now(),
-        title:f.get('meetingTitle'),
-        description:f.get('meetingDesc')||'',
-        startTime:f.get('meetingStart'),
-        endTime:f.get('meetingEnd'),
-        channelId:f.get('meetingChannel')||null,
-        participants:(f.get('meetingParticipants')||'').split(',').map(s=>s.trim()).filter(Boolean),
-        createdBy:currentUser?currentUser.name:'Bilinmeyen',
-        status:'scheduled'
-    };
-    if(!S.meetings)S.meetings=[];
-    S.meetings.push(meeting);
-    if(socket&&socket.connected)socket.emit('meeting:created',meeting);
-    save();closeModal('modal-create-meeting');e.target.reset();
-    renderMeetings();renderCalendar();
-    showNotif('Toplanti olusturuldu: '+meeting.title);
+    const editId=document.getElementById('meeting-edit-id').value;
+    if(editId){
+        // GUNCELLEME MODU
+        if(!S.meetings)return;
+        const idx=S.meetings.findIndex(x=>String(x.id)===String(editId));
+        if(idx===-1){showNotif('Toplanti bulunamadi!');return;}
+        S.meetings[idx]=Object.assign({},S.meetings[idx],{
+            title:f.get('meetingTitle'),
+            description:f.get('meetingDesc')||'',
+            startTime:f.get('meetingStart'),
+            endTime:f.get('meetingEnd'),
+            channelId:f.get('meetingChannel')||null,
+            participants:(f.get('meetingParticipants')||'').split(',').map(s=>s.trim()).filter(Boolean),
+            updatedAt:new Date().toISOString(),
+            updatedBy:currentUser?currentUser.name:'Bilinmeyen'
+        });
+        save();closeModal('modal-create-meeting');e.target.reset();
+        document.getElementById('meeting-edit-id').value='';
+        renderMeetings();renderCalendar();
+        showNotif('Toplanti guncellendi: '+S.meetings[idx].title);
+    } else {
+        // YENI TOPLANTI MODU
+        const meeting={
+            id:Date.now(),
+            title:f.get('meetingTitle'),
+            description:f.get('meetingDesc')||'',
+            startTime:f.get('meetingStart'),
+            endTime:f.get('meetingEnd'),
+            channelId:f.get('meetingChannel')||null,
+            participants:(f.get('meetingParticipants')||'').split(',').map(s=>s.trim()).filter(Boolean),
+            createdBy:currentUser?currentUser.name:'Bilinmeyen',
+            status:'scheduled'
+        };
+        if(!S.meetings)S.meetings=[];
+        S.meetings.push(meeting);
+        if(socket&&socket.connected)socket.emit('meeting:created',meeting);
+        save();closeModal('modal-create-meeting');e.target.reset();
+        renderMeetings();renderCalendar();
+        showNotif('Toplanti olusturuldu: '+meeting.title);
+    }
 }
 
 function deleteMeeting(id){
