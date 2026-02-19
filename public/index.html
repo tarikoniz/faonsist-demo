@@ -1923,6 +1923,12 @@
                       <option value="huurdede">Hurdede</option>
                     </select>
                     <button onclick="openMekanForm()" class="tab-btn bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/20 whitespace-nowrap">+ Mekan Ekle</button>
+                    <div class="w-px bg-gray-700 self-stretch mx-1"></div>
+                    <button onclick="openTopluDemirbasForm()" class="tab-btn bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/20 whitespace-nowrap">📋 Toplu Giriş</button>
+                    <button onclick="openDmrExcelImport()" class="tab-btn bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 whitespace-nowrap">📤 Excel Import</button>
+                    <button onclick="downloadDmrTemplate()" class="tab-btn bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 border border-gray-500/20 whitespace-nowrap">📥 Şablon İndir</button>
+                    <button onclick="printOdaListesi()" class="tab-btn bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/20 whitespace-nowrap">📄 Oda Listesi</button>
+                    <button onclick="printPersonelZimmetFisi()" class="tab-btn bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/20 whitespace-nowrap">👤 Zimmet Fişi</button>
                   </div>
                   <!-- Tablo -->
                   <div class="glass rounded-xl overflow-hidden">
@@ -3564,6 +3570,110 @@
     <div class="flex gap-2 mt-5">
       <button onclick="saveMekan()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2.5 rounded-lg text-sm font-medium transition-colors">Kaydet</button>
       <button onclick="closeModal('modal-mekan')" class="px-6 bg-gray-700 hover:bg-gray-600 py-2.5 rounded-lg text-sm transition-colors">İptal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Toplu Demirbaş Girişi -->
+<div id="modal-toplu-demirbaslar" class="modal">
+  <div class="glass-strong rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-bold">📋 Toplu Demirbaş Girişi</h3>
+      <button onclick="closeModal('modal-toplu-demirbaslar')" class="text-gray-400 hover:text-white text-xl">×</button>
+    </div>
+    <!-- Oda / Lokasyon seçimi + Tarih -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 p-4 bg-gray-800/40 rounded-xl">
+      <div>
+        <label class="block text-xs mb-1.5 text-gray-400">Lokasyon *</label>
+        <select id="toplu-dmr-depo" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm" onchange="topluDmrLokasyonDegisti()">
+          <option value="">— Lokasyon Seçiniz —</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1.5 text-gray-400">Mekan / Oda</label>
+        <select id="toplu-dmr-mekan" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+          <option value="">— Önce Lokasyon Seçin —</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1.5 text-gray-400">Satın Alma Tarihi</label>
+        <input type="date" id="toplu-dmr-tarih" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+      </div>
+    </div>
+    <!-- Satır tablosu -->
+    <div class="overflow-x-auto mb-3">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-700/50 text-xs text-gray-400">
+            <th class="text-left p-2 w-8">#</th>
+            <th class="text-left p-2">Ad / Model *</th>
+            <th class="text-left p-2 w-36">Seri No</th>
+            <th class="text-left p-2 w-40">Kategori</th>
+            <th class="text-left p-2 w-32">Değer (₺)</th>
+            <th class="p-2 w-8"></th>
+          </tr>
+        </thead>
+        <tbody id="toplu-dmr-rows"></tbody>
+      </table>
+    </div>
+    <button onclick="addTopluDmrRow()" class="w-full border border-dashed border-gray-600 hover:border-green-500 text-gray-400 hover:text-green-400 rounded-lg py-2 text-sm transition-colors mb-4">+ Satır Ekle</button>
+    <div class="flex gap-2">
+      <button onclick="saveTopluDemirbaslar()" class="flex-1 bg-green-600 hover:bg-green-700 py-2.5 rounded-lg text-sm font-medium transition-colors" id="toplu-dmr-save-btn">💾 Toplu Kaydet</button>
+      <button onclick="closeModal('modal-toplu-demirbaslar')" class="px-6 bg-gray-700 hover:bg-gray-600 py-2.5 rounded-lg text-sm transition-colors">İptal</button>
+    </div>
+    <p class="text-xs text-gray-500 mt-2 text-center">💡 Tab ile hücreler arası geçiş yapın. Son satırda Enter → yeni satır ekler.</p>
+  </div>
+</div>
+
+<!-- Modal: Excel Import -->
+<div id="modal-dmr-excel-import" class="modal">
+  <div class="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="text-lg font-bold">📤 Demirbaş Excel Import</h3>
+      <button onclick="closeModal('modal-dmr-excel-import')" class="text-gray-400 hover:text-white text-xl">×</button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+      <div>
+        <label class="block text-xs mb-1.5 text-gray-400">Lokasyon *</label>
+        <select id="excel-dmr-depo" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm" onchange="excelDmrLokasyonDegisti()">
+          <option value="">— Lokasyon Seçiniz —</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs mb-1.5 text-gray-400">Mekan / Oda</label>
+        <select id="excel-dmr-mekan" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+          <option value="">— Opsiyonel —</option>
+        </select>
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs mb-1.5 text-gray-400">Excel Dosyası (.xlsx, .xls, .csv) *</label>
+      <input type="file" id="dmr-excel-file-input" accept=".xlsx,.xls,.csv" onchange="handleDmrExcelFile(event)" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-3 py-2 text-sm file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+    </div>
+    <!-- Önizleme -->
+    <div id="dmr-excel-preview" class="hidden mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs text-gray-400">Önizleme: <strong id="dmr-excel-row-count" class="text-white">0</strong> satır</span>
+        <span class="text-xs text-green-400">✓ Dosya okundu</span>
+      </div>
+      <div class="overflow-x-auto max-h-48 rounded-lg border border-gray-700">
+        <table class="w-full text-xs">
+          <thead class="bg-gray-800 sticky top-0">
+            <tr class="text-gray-400">
+              <th class="p-2 text-left">Ad/Model</th>
+              <th class="p-2 text-left">Seri No</th>
+              <th class="p-2 text-left">Kategori</th>
+              <th class="p-2 text-left">Değer ₺</th>
+              <th class="p-2 text-left">Sat. Tarihi</th>
+            </tr>
+          </thead>
+          <tbody id="dmr-excel-preview-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="saveDmrExcelImport()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg text-sm font-medium transition-colors" id="dmr-excel-import-btn">İçe Aktar</button>
+      <button onclick="closeModal('modal-dmr-excel-import')" class="px-6 bg-gray-700 hover:bg-gray-600 py-2.5 rounded-lg text-sm transition-colors">İptal</button>
     </div>
   </div>
 </div>
@@ -14985,6 +15095,474 @@ function deleteMekan(id){
     if(!confirm('Bu mekanı silmek istediğinize emin misiniz?')) return;
     S.mekanlar = S.mekanlar.filter(x=>x.id!==id);
     save(); renderDemirbaslar(); showNotif('Mekan silindi.');
+}
+
+// ═══════════════════════════════════════════════════
+// TOPLU DEMİRBAŞ GİRİŞİ
+// ═══════════════════════════════════════════════════
+
+let topluDmrRows = [];
+let dmrExcelData = [];
+
+function openTopluDemirbasForm(){
+    S.mekanlar = S.mekanlar||[]; S.demirbaslar = S.demirbaslar||[];
+    topluDmrRows = [{ad:'',seriNo:'',kategori:'it',deger:''}];
+    // Lokasyon dropdown
+    const depSel = document.getElementById('toplu-dmr-depo');
+    depSel.innerHTML = '<option value="">— Lokasyon Seçiniz —</option>'+(S.depolar||[]).map(d=>`<option value="${d.id}">${d.ad}</option>`).join('');
+    document.getElementById('toplu-dmr-mekan').innerHTML = '<option value="">— Önce Lokasyon Seçin —</option>';
+    document.getElementById('toplu-dmr-tarih').value = new Date().toISOString().split('T')[0];
+    renderTopluDmrRows();
+    openModal('modal-toplu-demirbaslar');
+    setTimeout(()=>{ const el=document.querySelector('#toplu-dmr-rows input[data-col="ad"]'); if(el) el.focus(); },200);
+}
+
+function topluDmrLokasyonDegisti(){
+    const depoId = parseInt(document.getElementById('toplu-dmr-depo').value)||null;
+    const mekanSel = document.getElementById('toplu-dmr-mekan');
+    if(!depoId){ mekanSel.innerHTML='<option value="">— Önce Lokasyon Seçin —</option>'; return; }
+    const mekanlar = (S.mekanlar||[]).filter(m=>m.depoId===depoId);
+    mekanSel.innerHTML = '<option value="">— Mekan Seçiniz (opsiyonel) —</option>'+mekanlar.map(m=>`<option value="${m.id}">${m.ad}${m.kat?' - '+m.kat:''}</option>`).join('');
+}
+
+function renderTopluDmrRows(){
+    const tbody = document.getElementById('toplu-dmr-rows');
+    if(!tbody) return;
+    const katOpts = Object.entries(DMR_KAT_LABELS).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+    tbody.innerHTML = topluDmrRows.map((r,i)=>`
+      <tr class="border-b border-gray-700/30" id="toplu-dmr-row-${i}">
+        <td class="p-1 text-center text-xs text-gray-500">${i+1}</td>
+        <td class="p-1"><input type="text" data-idx="${i}" data-col="ad" value="${r.ad||''}" placeholder="Demirbaş adı / model" class="w-full bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none" oninput="topluDmrUpdate(${i},'ad',this.value)" onkeydown="topluDmrKeyNav(event,${i},'ad')"></td>
+        <td class="p-1"><input type="text" data-idx="${i}" data-col="seriNo" value="${r.seriNo||''}" placeholder="SN-12345" class="w-full bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none" oninput="topluDmrUpdate(${i},'seriNo',this.value)" onkeydown="topluDmrKeyNav(event,${i},'seriNo')"></td>
+        <td class="p-1"><select data-idx="${i}" data-col="kategori" class="w-full bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none" onchange="topluDmrUpdate(${i},'kategori',this.value)" onkeydown="topluDmrKeyNav(event,${i},'kategori')">${katOpts.replace(`value="${r.kategori||'it'}"`,`value="${r.kategori||'it'}" selected`)}</select></td>
+        <td class="p-1"><input type="number" data-idx="${i}" data-col="deger" value="${r.deger||''}" placeholder="0" min="0" class="w-full bg-gray-800/80 border border-gray-700 rounded px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none" oninput="topluDmrUpdate(${i},'deger',this.value)" onkeydown="topluDmrKeyNav(event,${i},'deger')"></td>
+        <td class="p-1 text-center"><button onclick="removeTopluDmrRow(${i})" class="text-gray-500 hover:text-red-400 text-lg leading-none">×</button></td>
+      </tr>`).join('');
+    document.getElementById('toplu-dmr-save-btn').textContent = '💾 Toplu Kaydet ('+topluDmrRows.length+' adet)';
+}
+
+function topluDmrUpdate(idx, col, val){
+    if(topluDmrRows[idx]) topluDmrRows[idx][col] = val;
+}
+
+function topluDmrKeyNav(e, idx, col){
+    const colOrder = ['ad','seriNo','kategori','deger'];
+    const colIdx = colOrder.indexOf(col);
+    if(e.key === 'Tab' && !e.shiftKey){
+        e.preventDefault();
+        if(colIdx < colOrder.length-1){
+            // Sonraki hücreye geç
+            const nextCol = colOrder[colIdx+1];
+            const el = document.querySelector(`#toplu-dmr-rows [data-idx="${idx}"][data-col="${nextCol}"]`);
+            if(el) el.focus();
+        } else {
+            // Son hücrede Tab → sonraki satırın Ad'ına geç veya yeni satır ekle
+            if(idx < topluDmrRows.length-1){
+                const el = document.querySelector(`#toplu-dmr-rows [data-idx="${idx+1}"][data-col="ad"]`);
+                if(el) el.focus();
+            } else { addTopluDmrRow(); }
+        }
+    } else if(e.key === 'Enter' && col === 'ad'){
+        e.preventDefault();
+        addTopluDmrRow();
+    }
+}
+
+function addTopluDmrRow(){
+    const lastKat = topluDmrRows.length>0 ? topluDmrRows[topluDmrRows.length-1].kategori : 'it';
+    topluDmrRows.push({ad:'',seriNo:'',kategori:lastKat,deger:''});
+    renderTopluDmrRows();
+    setTimeout(()=>{
+        const last = topluDmrRows.length-1;
+        const el = document.querySelector(`#toplu-dmr-rows [data-idx="${last}"][data-col="ad"]`);
+        if(el) el.focus();
+    },50);
+}
+
+function removeTopluDmrRow(idx){
+    topluDmrRows.splice(idx,1);
+    if(topluDmrRows.length===0) topluDmrRows.push({ad:'',seriNo:'',kategori:'it',deger:''});
+    renderTopluDmrRows();
+}
+
+function saveTopluDemirbaslar(){
+    S.demirbaslar = S.demirbaslar||[];
+    const depoId = parseInt(document.getElementById('toplu-dmr-depo').value)||null;
+    const mekanId = parseInt(document.getElementById('toplu-dmr-mekan').value)||null;
+    const tarih = document.getElementById('toplu-dmr-tarih').value;
+    if(!depoId){showNotif('Lokasyon seçiniz!');return;}
+    const gecerli = topluDmrRows.filter(r=>r.ad&&r.ad.trim());
+    if(gecerli.length===0){showNotif('En az bir demirbaş adı giriniz!');return;}
+    const yil = new Date().getFullYear();
+    gecerli.forEach(r=>{
+        const seq = String((S.demirbaslar.length+1)).padStart(4,'0');
+        S.demirbaslar.push({
+            id: Date.now()+Math.random(),
+            ad: r.ad.trim(),
+            seriNo: r.seriNo||'',
+            kategori: r.kategori||'diger',
+            barkod: 'DMR-'+yil+'-'+seq,
+            depoId: depoId,
+            mekanId: mekanId,
+            birimDeger: parseFloat(r.deger)||0,
+            satinAlmaTarihi: tarih||'',
+            garantiBitisTarihi: '',
+            durum: 'depoda',
+            zimmetliPersonelId: null,
+            zimmetliPersonelAd: null,
+            zimmetTarihi: null,
+            notlar: '',
+            ekleyen: currentUser,
+            eklenmeTarihi: Date.now()
+        });
+    });
+    save(); closeModal('modal-toplu-demirbaslar'); renderDemirbaslar();
+    showNotif(gecerli.length+' demirbaş başarıyla eklendi!');
+    act(gecerli.length+' adet demirbaş toplu eklendi.');
+}
+
+// ═══════════════════════════════════════════════════
+// EXCEL IMPORT / EXPORT — DEMİRBAŞLAR
+// ═══════════════════════════════════════════════════
+
+function downloadDmrTemplate(){
+    if(typeof XLSX==='undefined'){showNotif('Excel kütüphanesi yüklenemedi!');return;}
+    const ws = XLSX.utils.aoa_to_sheet([
+        ['Ad/Model','Seri No','Kategori','Değer (₺)','Satın Alma Tarihi','Garanti Bitiş Tarihi','Notlar'],
+        ['Örnek: Dell Latitude 5530','SN-12345','it','45000','2024-01-15','2027-01-15','İlk kurulum'],
+        ['Örnek: Ofis Sandalyesi','','mobilya','2500','2024-02-01','',''],
+    ]);
+    ws['!cols']=[{wch:30},{wch:18},{wch:20},{wch:15},{wch:20},{wch:22},{wch:25}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Demirbaslar');
+    XLSX.writeFile(wb,'FaOnSisT_Demirbaslar_Sablon.xlsx');
+    showNotif('Şablon indirildi. Doldurup import ediniz.');
+}
+
+function openDmrExcelImport(){
+    S.mekanlar = S.mekanlar||[];
+    dmrExcelData = [];
+    const depSel = document.getElementById('excel-dmr-depo');
+    depSel.innerHTML = '<option value="">— Lokasyon Seçiniz —</option>'+(S.depolar||[]).map(d=>`<option value="${d.id}">${d.ad}</option>`).join('');
+    document.getElementById('excel-dmr-mekan').innerHTML = '<option value="">— Opsiyonel —</option>';
+    document.getElementById('dmr-excel-file-input').value='';
+    document.getElementById('dmr-excel-preview').classList.add('hidden');
+    document.getElementById('dmr-excel-import-btn').textContent = 'İçe Aktar';
+    openModal('modal-dmr-excel-import');
+}
+
+function excelDmrLokasyonDegisti(){
+    const depoId = parseInt(document.getElementById('excel-dmr-depo').value)||null;
+    const mekanSel = document.getElementById('excel-dmr-mekan');
+    if(!depoId){ mekanSel.innerHTML='<option value="">— Opsiyonel —</option>'; return; }
+    const mekanlar = (S.mekanlar||[]).filter(m=>m.depoId===depoId);
+    mekanSel.innerHTML = '<option value="">— Opsiyonel —</option>'+mekanlar.map(m=>`<option value="${m.id}">${m.ad}${m.kat?' - '+m.kat:''}</option>`).join('');
+}
+
+function handleDmrExcelFile(e){
+    if(typeof XLSX==='undefined'){showNotif('Excel kütüphanesi yüklenemedi!');return;}
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+        try{
+            const wb = XLSX.read(ev.target.result,{type:'array'});
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(ws,{defval:''});
+            if(data.length===0){showNotif('Dosya boş veya okunamıyor!');return;}
+            dmrExcelData = data;
+            // Önizleme
+            document.getElementById('dmr-excel-row-count').textContent = data.length;
+            const tbody = document.getElementById('dmr-excel-preview-body');
+            tbody.innerHTML = data.slice(0,10).map(r=>`<tr class="border-b border-gray-700/30 hover:bg-gray-800/30">
+              <td class="p-1.5">${r['Ad/Model']||r['ad']||r['Ad']||''}</td>
+              <td class="p-1.5">${r['Seri No']||r['seriNo']||''}</td>
+              <td class="p-1.5">${r['Kategori']||r['kategori']||''}</td>
+              <td class="p-1.5">${r['Değer (₺)']||r['Deger']||r['deger']||''}</td>
+              <td class="p-1.5">${r['Satın Alma Tarihi']||r['tarih']||''}</td>
+            </tr>`).join('');
+            if(data.length>10) tbody.innerHTML += `<tr><td colspan="5" class="p-1.5 text-center text-gray-500">... ve ${data.length-10} satır daha</td></tr>`;
+            document.getElementById('dmr-excel-preview').classList.remove('hidden');
+            document.getElementById('dmr-excel-import-btn').textContent = `İçe Aktar (${data.length} satır)`;
+        } catch(err){ console.error(err); showNotif('Dosya okuma hatası!'); }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function saveDmrExcelImport(){
+    S.demirbaslar = S.demirbaslar||[];
+    if(dmrExcelData.length===0){showNotif('Önce dosya seçiniz!');return;}
+    const depoId = parseInt(document.getElementById('excel-dmr-depo').value)||null;
+    const mekanId = parseInt(document.getElementById('excel-dmr-mekan').value)||null;
+    if(!depoId){showNotif('Lokasyon seçiniz!');return;}
+    const yil = new Date().getFullYear();
+    let eklenen = 0;
+    dmrExcelData.forEach(r=>{
+        const ad = (r['Ad/Model']||r['ad']||r['Ad']||'').toString().trim();
+        if(!ad) return;
+        const seq = String((S.demirbaslar.length+1)).padStart(4,'0');
+        S.demirbaslar.push({
+            id: Date.now()+Math.random(),
+            ad: ad,
+            seriNo: (r['Seri No']||r['seriNo']||'').toString().trim(),
+            kategori: (r['Kategori']||r['kategori']||'diger').toString().toLowerCase().trim(),
+            barkod: 'DMR-'+yil+'-'+seq,
+            depoId: depoId,
+            mekanId: mekanId,
+            birimDeger: parseFloat((r['Değer (₺)']||r['Deger']||r['deger']||0).toString().replace(/[^0-9.]/g,''))||0,
+            satinAlmaTarihi: (r['Satın Alma Tarihi']||r['tarih']||'').toString(),
+            garantiBitisTarihi: (r['Garanti Bitiş Tarihi']||r['garanti']||'').toString(),
+            durum: 'depoda',
+            zimmetliPersonelId: null,
+            zimmetliPersonelAd: null,
+            zimmetTarihi: null,
+            notlar: (r['Notlar']||r['notlar']||'').toString(),
+            ekleyen: currentUser,
+            eklenmeTarihi: Date.now()
+        });
+        eklenen++;
+    });
+    save(); closeModal('modal-dmr-excel-import'); renderDemirbaslar();
+    showNotif(eklenen+' demirbaş Excel\'den aktarıldı!');
+    act(eklenen+' adet demirbaş Excel\'den import edildi.');
+}
+
+// ═══════════════════════════════════════════════════
+// PRINT — ODA LİSTESİ & ZİMMET FİŞİ
+// ═══════════════════════════════════════════════════
+
+function printOdaListesi(forceMekanId){
+    S.demirbaslar = S.demirbaslar||[]; S.mekanlar = S.mekanlar||[];
+    const mekanId = forceMekanId || parseInt((document.getElementById('dmr-filter-mekan')||{}).value)||null;
+    const depoId = parseInt((document.getElementById('dmr-filter-lokasyon')||{}).value)||null;
+    let liste = S.demirbaslar;
+    let baslik = 'Tüm Demirbaşlar';
+    let altBaslik = '';
+    if(mekanId){
+        liste = liste.filter(d=>d.mekanId===mekanId);
+        const m = (S.mekanlar||[]).find(x=>x.id===mekanId);
+        if(m){ baslik = m.ad; altBaslik = m.kat||''; }
+    } else if(depoId){
+        liste = liste.filter(d=>d.depoId===depoId);
+        const dep = (S.depolar||[]).find(x=>x.id===depoId);
+        if(dep) baslik = dep.ad+' — Tüm Demirbaşlar';
+    }
+    if(liste.length===0){showNotif('Listelenecek demirbaş bulunamadı. Filtre seçin.');return;}
+    const toplamDeger = liste.reduce((s,d)=>s+(d.birimDeger||0),0);
+    const tarih = new Date().toLocaleDateString('tr-TR');
+    const depAd = depoId ? ((S.depolar||[]).find(x=>x.id===depoId)||{}).ad||'' : '';
+    const satirlar = liste.map((d,i)=>{
+        const kat = (DMR_KAT_LABELS[d.kategori]||d.kategori||'').replace(/^.+?\s/,'');
+        const durum = d.durum==='zimmetli' ? `<span style="color:#f59e0b">👤 ${d.zimmetliPersonelAd||'Zimmetli'}</span>` : (d.durum==='depoda'?'<span style="color:#10b981">📦 Depoda</span>':'<span style="color:#ef4444">'+d.durum+'</span>');
+        return `<tr style="border-bottom:1px solid #e5e7eb;">
+          <td style="padding:7px 8px;text-align:center;color:#6b7280;font-size:12px;">${i+1}</td>
+          <td style="padding:7px 8px;font-weight:600;">${d.ad}</td>
+          <td style="padding:7px 8px;color:#6b7280;font-size:12px;">${d.barkod||''}</td>
+          <td style="padding:7px 8px;color:#6b7280;font-size:12px;">${d.seriNo||'—'}</td>
+          <td style="padding:7px 8px;font-size:12px;">${kat}</td>
+          <td style="padding:7px 8px;font-size:12px;">${durum}</td>
+          <td style="padding:7px 8px;text-align:right;font-weight:600;">${d.birimDeger?'₺'+d.birimDeger.toLocaleString('tr-TR'):'—'}</td>
+        </tr>`;
+    }).join('');
+    let htmlStr = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Mekan Demirbaş Listesi</title>
+    <style>
+      body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;color:#111;}
+      .header{text-align:center;border-bottom:3px solid #1e40af;padding-bottom:16px;margin-bottom:20px;}
+      .header h1{font-size:20px;margin:0;color:#1e40af;letter-spacing:1px;}
+      .header h2{font-size:15px;margin:6px 0 4px;color:#111;}
+      .header p{font-size:12px;color:#6b7280;margin:2px 0;}
+      .meta{display:flex;justify-content:space-between;margin-bottom:16px;font-size:12px;color:#374151;}
+      table{width:100%;border-collapse:collapse;font-size:13px;}
+      thead tr{background:#1e40af;color:#fff;}
+      thead th{padding:9px 8px;text-align:left;font-weight:600;font-size:12px;}
+      tbody tr:nth-child(even){background:#f8fafc;}
+      .footer{margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;}
+      .footer .total{font-size:15px;font-weight:700;color:#1e40af;text-align:right;margin-bottom:16px;}
+      .sign-area{display:flex;gap:40px;margin-top:20px;}
+      .sign-box{flex:1;border-top:1px solid #6b7280;padding-top:8px;font-size:12px;color:#374151;text-align:center;}
+      @media print{body{padding:10px;} button{display:none!important;}}
+    </style></head><body>
+    <div class="header">
+      <h1>🏢 MEKAN DEMİRBAŞ LİSTESİ</h1>
+      <h2>${baslik}${altBaslik?' — '+altBaslik:''}</h2>
+      ${depAd && !mekanId ? '' : `<p>Lokasyon: ${depAd||((S.depolar||[]).find(x=>x.id===(liste[0]||{}).depoId)||{}).ad||''}</p>`}
+      <p>Rapor Tarihi: ${tarih}</p>
+    </div>
+    <div class="meta">
+      <span>Toplam: <strong>${liste.length} adet</strong> demirbaş</span>
+      <span>FaOnSisT v5.0</span>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:32px;">#</th>
+        <th>Demirbaş Adı</th>
+        <th>Barkod</th>
+        <th>Seri No</th>
+        <th>Kategori</th>
+        <th>Durum</th>
+        <th style="text-align:right;">Değer</th>
+      </tr></thead>
+      <tbody>${satirlar}</tbody>
+    </table>
+    <div class="footer">
+      <div class="total">Toplam Değer: ₺${toplamDeger.toLocaleString('tr-TR')}</div>
+      <div class="sign-area">
+        <div class="sign-box"><br><br>Hazırlayan<br>${currentUser||'________________'}</div>
+        <div class="sign-box"><br><br>Kontrol Eden<br>________________</div>
+        <div class="sign-box"><br><br>Onaylayan<br>________________</div>
+      </div>
+      <p style="font-size:10px;color:#9ca3af;text-align:center;margin-top:16px;">FaOnSisT v5.0 · Mekan Demirbaş Listesi · ${tarih}</p>
+    </div>
+    <script>setTimeout(()=>window.print(),600)<\/script>
+    </body></html>`;
+    dmrPrintBlob(htmlStr);
+}
+
+function printPersonelZimmetFisi(forcePId){
+    S.demirbaslar = S.demirbaslar||[];
+    // Zimmetli demirbaşlardan personel bul
+    let personelAd = forcePId;
+    let liste;
+    if(forcePId && typeof forcePId === 'number'){
+        // ID ile çağrıldı
+        const p = (S.personeller||[]).find(x=>x.id===forcePId);
+        personelAd = p ? (p.ad+' '+(p.soyad||'')).trim() : ('P#'+forcePId);
+        liste = S.demirbaslar.filter(d=>d.zimmetliPersonelId===forcePId && d.durum==='zimmetli');
+    } else if(forcePId && typeof forcePId === 'string'){
+        // Ad ile çağrıldı
+        personelAd = forcePId;
+        liste = S.demirbaslar.filter(d=>d.zimmetliPersonelAd===forcePId && d.durum==='zimmetli');
+    } else {
+        // Filtreden veya seçimden
+        const zimmetliler = [...new Set(S.demirbaslar.filter(d=>d.durum==='zimmetli'&&d.zimmetliPersonelAd).map(d=>d.zimmetliPersonelAd))];
+        if(zimmetliler.length===0){showNotif('Zimmetli demirbaş bulunamadı!');return;}
+        // İlk zimmetliyi al (kullanıcı filter'dan seçmişse)
+        personelAd = zimmetliler[0];
+        liste = S.demirbaslar.filter(d=>d.zimmetliPersonelAd===personelAd && d.durum==='zimmetli');
+    }
+    if(liste.length===0){showNotif('Bu personele zimmetli demirbaş bulunamadı!');return;}
+    const toplamDeger = liste.reduce((s,d)=>s+(d.birimDeger||0),0);
+    const tarih = new Date().toLocaleDateString('tr-TR');
+    const belgeNo = 'ZMT-DMR-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-4);
+    const p = (S.personeller||[]).find(x=>x.ad&&(x.ad+' '+(x.soyad||'')).trim()===personelAd);
+    const dept = p ? (p.departman||p.departmanAd||'') : '';
+    const gorevi = p ? (p.gorevi||p.unvan||'') : '';
+    const satirlar = liste.map((d,i)=>{
+        const kat = (DMR_KAT_LABELS[d.kategori]||d.kategori||'').replace(/^.+?\s/,'');
+        const dep = (S.depolar||[]).find(x=>x.id===d.depoId);
+        const mek = (S.mekanlar||[]).find(x=>x.id===d.mekanId);
+        return `<tr style="border-bottom:1px solid #e5e7eb;">
+          <td style="padding:8px;text-align:center;color:#6b7280;">${i+1}</td>
+          <td style="padding:8px;font-weight:600;">${d.ad}</td>
+          <td style="padding:8px;font-size:12px;color:#6b7280;">${d.barkod||''}</td>
+          <td style="padding:8px;font-size:12px;">${d.seriNo||'—'}</td>
+          <td style="padding:8px;font-size:12px;">${kat}</td>
+          <td style="padding:8px;font-size:12px;">${dep?dep.ad:''}${mek?' / '+mek.ad:''}</td>
+          <td style="padding:8px;font-size:12px;">${d.zimmetTarihi||'—'}</td>
+          <td style="padding:8px;text-align:right;font-weight:600;">${d.birimDeger?'₺'+d.birimDeger.toLocaleString('tr-TR'):'—'}</td>
+        </tr>`;
+    }).join('');
+    let htmlStr = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Zimmet Belgesi</title>
+    <style>
+      body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:20px;color:#111;}
+      .header{border-bottom:3px solid #1e40af;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;}
+      .header-left h1{font-size:22px;margin:0 0 4px;color:#1e40af;letter-spacing:1px;}
+      .header-left p{font-size:12px;color:#6b7280;margin:2px 0;}
+      .header-right{text-align:right;font-size:12px;color:#374151;}
+      .header-right strong{display:block;font-size:14px;color:#111;}
+      .info-box{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+      .info-row{font-size:13px;} .info-label{color:#6b7280;font-size:11px;}
+      table{width:100%;border-collapse:collapse;font-size:13px;}
+      thead tr{background:#1e40af;color:#fff;}
+      thead th{padding:9px 8px;text-align:left;font-size:12px;}
+      tbody tr:nth-child(even){background:#f8fafc;}
+      .footer{margin-top:24px;}
+      .total-row{text-align:right;font-size:15px;font-weight:700;color:#1e40af;padding:10px 8px;border-top:2px solid #1e40af;}
+      .sign-area{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px;border-top:1px solid #e5e7eb;padding-top:20px;}
+      .sign-box{font-size:12px;color:#374151;}
+      .sign-box .sign-label{font-weight:600;margin-bottom:4px;}
+      .sign-line{border-bottom:1px solid #6b7280;margin:30px 0 6px;width:80%;}
+      .disclaimer{margin-top:20px;font-size:10px;color:#9ca3af;border-top:1px dashed #e5e7eb;padding-top:10px;}
+      @media print{body{padding:10px;}}
+    </style></head><body>
+    <div class="header">
+      <div class="header-left">
+        <h1>ZİMMET BELGESİ</h1>
+        <p>Demirbaş Teslim ve Zimmet Formu</p>
+      </div>
+      <div class="header-right">
+        <strong>Belge No: ${belgeNo}</strong>
+        <span>Düzenleme Tarihi: ${tarih}</span>
+      </div>
+    </div>
+    <div class="info-box">
+      <div class="info-row"><div class="info-label">ZİMMETLİ KİŞİ</div><strong>${personelAd}</strong></div>
+      <div class="info-row"><div class="info-label">DEPARTMAN</div>${dept||'—'}</div>
+      <div class="info-row"><div class="info-label">GÖREV / ÜNVAN</div>${gorevi||'—'}</div>
+      <div class="info-row"><div class="info-label">ZİMMET ADEDİ</div><strong>${liste.length} adet</strong></div>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:30px;">#</th>
+        <th>Demirbaş Adı</th>
+        <th>Barkod</th>
+        <th>Seri No</th>
+        <th>Kategori</th>
+        <th>Konum</th>
+        <th>Zimmet Tarihi</th>
+        <th style="text-align:right;">Değer</th>
+      </tr></thead>
+      <tbody>${satirlar}</tbody>
+    </table>
+    <div class="footer">
+      <div class="total-row">Toplam Değer: ₺${toplamDeger.toLocaleString('tr-TR')}</div>
+      <div class="sign-area">
+        <div class="sign-box">
+          <div class="sign-label">TESLİM EDEN</div>
+          <div class="sign-line"></div>
+          Ad Soyad: ${currentUser||'________________'}<br>
+          Tarih: ________________
+        </div>
+        <div class="sign-box">
+          <div class="sign-label">TESLİM ALAN (ZİMMETLİ)</div>
+          <div class="sign-line"></div>
+          Ad Soyad: ${personelAd}<br>
+          Tarih: ________________
+        </div>
+      </div>
+      <div class="disclaimer">
+        Bu zimmet belgesi, yukarıda belirtilen demirbaşların teslim edildiğini ve zimmetlenenin sorumluluğunu kabul ettiğini belgelemektedir.
+        Zimmetlenen kişi, demirbaşları eksiksiz ve çalışır durumda iade etmekle yükümlüdür.<br>
+        FaOnSisT v5.0 · ${tarih}
+      </div>
+    </div>
+    <script>setTimeout(()=>window.print(),600)<\/script>
+    </body></html>`;
+    dmrPrintBlob(htmlStr);
+}
+
+// ── Popup blocker bypass: Blob URL ile print ──
+function dmrPrintBlob(htmlContent){
+    const blob = new Blob([htmlContent], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1200px;height:900px;border:none;';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    iframe.onload = function(){
+        try{
+            iframe.contentWindow.focus();
+            setTimeout(()=>{
+                iframe.contentWindow.print();
+                setTimeout(()=>{ URL.revokeObjectURL(url); document.body.removeChild(iframe); }, 2000);
+            }, 400);
+        } catch(e){
+            // Fallback: yeni sekme aç
+            const a = document.createElement('a');
+            a.href = url; a.target = '_blank'; a.click();
+            setTimeout(()=>URL.revokeObjectURL(url), 5000);
+            document.body.removeChild(iframe);
+        }
+    };
 }
 
 </script>
