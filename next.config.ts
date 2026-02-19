@@ -10,12 +10,13 @@ const nextConfig: NextConfig = {
   // Powered-by header'ı gizle (güvenlik)
   poweredByHeader: false,
 
-  // Redirect root to the HTML demo
-  async rewrites() {
+  // Redirect root to the original HTML system
+  async redirects() {
     return [
       {
-        source: '/app',
+        source: '/',
         destination: '/index.html',
+        permanent: false,
       },
     ];
   },
