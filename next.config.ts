@@ -5,7 +5,7 @@ const allowedOrigin = process.env.CORS_ORIGIN || (isProd ? 'https://faonsist.com
 
 const nextConfig: NextConfig = {
   // Standalone output for Docker deployments
-  output: 'standalone',
+  // output: 'standalone', // Vercel'de gerek yok
 
   // TypeScript ve ESLint hatalarında build durmasın (Vercel CI için)
   typescript: {
