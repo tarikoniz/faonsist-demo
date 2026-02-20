@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         take: 10,
         select: { role: true, icerik: true },
       });
-      conversationHistory = sessionMessages.reverse().map(m => ({
+      conversationHistory = sessionMessages.reverse().map((m: { role: string; icerik: string }) => ({
         role: m.role,
         content: m.icerik,
       }));
