@@ -146,6 +146,12 @@
         html.light .text-gray-100 { color:#1e293b !important; }
         html.light .text-gray-200 { color:#334155 !important; }
         html.light .text-gray-300 { color:#475569 !important; }
+        /* Tab butonları ve genel butonlar — light temada okunabilir */
+        html.light button { color:#374151 !important; }
+        html.light button[class*="bg-gray-7"] { background:#e2e8f0 !important; color:#374151 !important; }
+        html.light button[class*="bg-gray-8"] { background:#f1f5f9 !important; color:#374151 !important; }
+        html.light button[class*="text-gray-3"],
+        html.light button[class*="text-gray-4"] { color:#374151 !important; }
         html.light .text-gray-400 { color:#64748b !important; }
         html.light .text-gray-500 { color:#94a3b8 !important; }
 
@@ -5662,38 +5668,49 @@ function sendMessage(){
 // ===================== BUILD - PROJECTS =====================
 function renderProjects(){
     const c=document.getElementById('projects-list');
-    if(S.projects.length===0){c.innerHTML='<p class="text-gray-500 text-sm">Henuz proje eklenmedi.</p>';renderHakedis();renderTimeline();return;}
+    if(S.projects.length===0){c.innerHTML='<p class="text-gray-500 text-sm">Henüz proje eklenmedi.</p>';renderHakedis();renderTimeline();return;}
     c.innerHTML=S.projects.map(p=>{
-        const pctColor=p.completion>=80?'bg-green-500':p.completion>=50?'bg-blue-500':p.completion>=25?'bg-yellow-500':'bg-red-500';
-        const ptc=PT_COLORS[p.projectType]||'bg-gray-500/20 text-gray-400';
-        const ptl=(PROJECT_TYPES.find(t=>t.v===p.projectType)||{l:'-'}).l;
+        // Alan adı uyumu: Türkçe (DB) ve İngilizce (eski local) her ikisini destekle
+        const ad       = p.ad       || p.name        || '-';
+        const konum    = p.konum    || p.location     || '';
+        const muteahhit= p.isverenAdi|| p.contractor  || '-';
+        const pm       = p.mudurAdi || p.manager      || '-';
+        const durum    = p.durum    || p.status       || 'devam';
+        const ilerleme = p.ilerleme ?? p.completion   ?? 0;
+        const butce    = p.butce    || p.budget       || 0;
+        const harcanan = p.harcanan || p.spent        || 0;
+        const basTarihi= p.basTarihi|| p.startDate    || '';
+        const bitTarihi= p.bitTarihi|| p.endDate      || '';
+        const aciklama = p.aciklama || p.notes        || '';
+        const pctColor = ilerleme>=80?'bg-green-500':ilerleme>=50?'bg-blue-500':ilerleme>=25?'bg-yellow-500':'bg-red-500';
         const taseronCount=(p.taseronlar||[]).length;
         const ikCount=(p.isKalemleri||[]).length;
         const hkCount=(p.hakedisler||[]).length;
-        const dateRange=p.startDate&&p.endDate?`${p.startDate} → ${p.endDate}`:'';
+        const gorevler=(p.gorevler||p.tasks||[]);
+        const dateRange=basTarihi&&bitTarihi?`${basTarihi} → ${bitTarihi}`:'';
         return `<div class="glass rounded-xl p-4 sm:p-5">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
-            <div class="min-w-0"><div class="flex items-center gap-2 mb-1 flex-wrap"><h4 class="font-bold text-sm sm:text-base">${p.name}</h4><span class="px-2 py-0.5 rounded text-[9px] font-semibold ${ptc}">${ptl}</span></div><p class="text-[11px] sm:text-xs text-gray-400 break-words">Muteahhit: ${p.contractor} | PM: ${p.manager}${p.location?' | 📍 '+p.location:''}</p>${dateRange?`<p class="text-[10px] text-gray-500 mt-0.5">📅 ${dateRange}</p>`:''}</div>
-            <div class="flex items-center gap-2 flex-shrink-0"><button onclick="openEditProject(${p.id})" class="text-gray-500 hover:text-blue-400 text-xs">Düzenle</button><button onclick="openProjectDetail(${p.id})" class="px-2 py-1 bg-green-600/20 text-green-400 hover:bg-green-600/40 rounded text-xs">Detay</button><span class="status-${p.status}">${stName(p.status)}</span><button onclick="deleteItem('project',${p.id})" class="text-gray-600 hover:text-red-400 text-sm">&times;</button></div>
+            <div class="min-w-0"><div class="flex items-center gap-2 mb-1 flex-wrap"><h4 class="font-bold text-sm sm:text-base">${ad}</h4>${p.kod?`<span class="px-2 py-0.5 rounded text-[9px] font-semibold bg-gray-500/20 text-gray-400">${p.kod}</span>`:''}</div><p class="text-[11px] sm:text-xs text-gray-400 break-words">İşveren: ${muteahhit} | PM: ${pm}${konum?' | 📍 '+konum:''}</p>${dateRange?`<p class="text-[10px] text-gray-500 mt-0.5">📅 ${dateRange}</p>`:''}</div>
+            <div class="flex items-center gap-2 flex-shrink-0"><button onclick="openEditProject(${p.id})" class="text-gray-500 hover:text-blue-400 text-xs">Düzenle</button><button onclick="openProjectDetail(${p.id})" class="px-2 py-1 bg-green-600/20 text-green-400 hover:bg-green-600/40 rounded text-xs">Detay</button><span class="status-${durum}">${stName(durum)}</span><button onclick="deleteItem('project',${p.id})" class="text-gray-600 hover:text-red-400 text-sm">&times;</button></div>
         </div>
         <div class="grid grid-cols-4 gap-3 mb-3">
-            <div><p class="text-[10px] text-gray-500">Sozlesme</p><p class="text-sm font-bold text-blue-400">\u20BA${fmt(p.contractAmount||p.budget)}</p></div>
-            <div><p class="text-[10px] text-gray-500">Butce</p><p class="text-sm font-bold text-purple-400">\u20BA${fmt(p.budget)}</p></div>
-            <div><p class="text-[10px] text-gray-500">Harcanan</p><p class="text-sm font-bold text-orange-400">\u20BA${fmt(p.spent)}</p></div>
-            <div><p class="text-[10px] text-gray-500">Tamamlanma</p><p class="text-sm font-bold text-green-400">%${p.completion}</p></div>
+            <div><p class="text-[10px] text-gray-500">Sözleşme</p><p class="text-sm font-bold text-blue-400">₺${fmt(butce)}</p></div>
+            <div><p class="text-[10px] text-gray-500">Bütçe</p><p class="text-sm font-bold text-purple-400">₺${fmt(butce)}</p></div>
+            <div><p class="text-[10px] text-gray-500">Harcanan</p><p class="text-sm font-bold text-orange-400">₺${fmt(harcanan)}</p></div>
+            <div><p class="text-[10px] text-gray-500">Tamamlanma</p><p class="text-sm font-bold text-green-400">%${ilerleme}</p></div>
         </div>
-        <div class="progress-bar mb-3"><div class="progress-fill ${pctColor}" style="width:${p.completion}%"></div></div>
+        <div class="progress-bar mb-3"><div class="progress-fill ${pctColor}" style="width:${ilerleme}%"></div></div>
         <div class="flex gap-3 mb-3 text-[10px] text-gray-500">
-            <span>👷 ${taseronCount} Taseron</span><span>📋 ${ikCount} Is Kalemi</span><span>📄 ${hkCount} Hakedis</span><span>✅ ${(p.tasks||[]).filter(t=>t.done).length}/${(p.tasks||[]).length} Gorev</span>
+            <span>👷 ${taseronCount} Taşeron</span><span>📋 ${ikCount} İş Kalemi</span><span>📄 ${hkCount} Hakediş</span><span>✅ ${gorevler.filter(t=>t.done||t.tamamlandi).length}/${gorevler.length} Görev</span>
         </div>
-        ${p.notes?`<p class="text-[11px] text-gray-500 mb-3">${p.notes}</p>`:''}
+        ${aciklama?`<p class="text-[11px] text-gray-500 mb-3">${aciklama}</p>`:''}
         <div class="flex gap-2 flex-wrap">
-            ${p.status==='pending'?`<button onclick="updateStatus('project',${p.id},'reviewing')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors">Kontrole Gönder</button>`:''}
-            ${p.status==='reviewing'?`<button onclick="updateStatus('project',${p.id},'approved')" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded text-xs transition-colors">Onayla</button><button onclick="updateStatus('project',${p.id},'rejected')" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-xs transition-colors">Reddet</button>`:''}
-            <button onclick="openTaseronForm(${p.id})" class="px-3 py-1.5 bg-amber-600/20 text-amber-400 hover:bg-amber-600/40 rounded text-xs">+ Taseron</button>
-            <button onclick="openIsKalemiForm(${p.id})" class="px-3 py-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 rounded text-xs">+ Is Kalemi</button>
+            ${durum==='pending'||durum==='beklemede'?`<button onclick="updateStatus('project',${p.id},'reviewing')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors">Kontrole Gönder</button>`:''}
+            ${durum==='reviewing'||durum==='inceleniyor'?`<button onclick="updateStatus('project',${p.id},'approved')" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded text-xs transition-colors">Onayla</button><button onclick="updateStatus('project',${p.id},'rejected')" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-xs transition-colors">Reddet</button>`:''}
+            <button onclick="openTaseronForm(${p.id})" class="px-3 py-1.5 bg-amber-600/20 text-amber-400 hover:bg-amber-600/40 rounded text-xs">+ Taşeron</button>
+            <button onclick="openIsKalemiForm(${p.id})" class="px-3 py-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 rounded text-xs">+ İş Kalemi</button>
             <button onclick="openAddExpense(${p.id})" class="px-3 py-1.5 bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 rounded text-xs">+ Harcama</button>
-            <button onclick="openTaskPanel(${p.id})" class="px-3 py-1.5 bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/40 rounded text-xs">Gorevler (${(p.tasks||[]).length})</button>
+            <button onclick="openTaskPanel(${p.id})" class="px-3 py-1.5 bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/40 rounded text-xs">Görevler (${gorevler.length})</button>
         </div></div>`;
     }).join('');
     renderHakedis();renderTimeline();
