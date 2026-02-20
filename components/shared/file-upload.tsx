@@ -59,6 +59,7 @@ export function FileUpload({
         return undefined;
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const handleFiles = useCallback(
         async (selectedFiles: FileList | File[]) => {
             const fileArray = Array.from(selectedFiles).slice(0, maxFiles - files.length);

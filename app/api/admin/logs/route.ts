@@ -11,13 +11,13 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const level = searchParams.get('level');
-  const module = searchParams.get('module');
+  const moduleFilter = searchParams.get('module');
   const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 500);
   const offset = parseInt(searchParams.get('offset') || '0');
 
   const where: any = {};
   if (level) where.level = level;
-  if (module) where.module = module;
+  if (moduleFilter) where.module = moduleFilter;
 
   try {
     const [logs, total] = await Promise.all([
