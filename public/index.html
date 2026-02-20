@@ -4563,20 +4563,26 @@ function renderTalepler(){
     html+='</div>';
     talepler.slice().reverse().forEach(t=>{
         const proj=S.projects.find(p=>p.id===t.projectId);
+        const projAdi=proj?(proj.ad||proj.name||''):'Genel';
         const kalemSayisi=(t.kalemler||[]).length;
+        const talepEden=t.talepEden||t.taleptEden||'';
+        const aciliyet=t.aciliyet||t.oncelik||'normal';
+        const toplamTahmini=t.toplamTahmini||t.tapinanTutar||0;
         html+=`<div class="glass rounded-xl p-5 mb-3">
             <div class="flex items-start justify-between mb-3">
-                <div><h4 class="font-bold text-sm">${t.talepNo} <span class="text-[10px] text-gray-500 font-normal">${proj?proj.name:'Genel'}</span></h4>
-                <p class="text-[10px] text-gray-500">${t.talepEden||''} | ${DEPARTMANLAR.find(d=>d.v===t.departman)?.l||t.departman} | ${kalemSayisi} kalem | Tahmini: \u20BA${fmtFull(t.toplamTahmini||0)}</p></div>
+                <div><h4 class="font-bold text-sm">${t.talepNo} <span class="text-[10px] text-gray-500 font-normal">${projAdi}</span></h4>
+                <p class="text-[10px] text-gray-500">${talepEden} | ${DEPARTMANLAR.find(d=>d.v===t.departman)?.l||t.departman||''} | ${kalemSayisi} kalem | Tahmini: \u20BA${fmtFull(toplamTahmini)}</p></div>
                 <div class="flex items-center gap-2">
-                    <span class="${aciliyetCss(t.aciliyet)} px-2 py-0.5 rounded-full text-[9px] font-semibold">${aciliyetLabel(t.aciliyet)}</span>
+                    <span class="${aciliyetCss(aciliyet)} px-2 py-0.5 rounded-full text-[9px] font-semibold">${aciliyetLabel(aciliyet)}</span>
                     <span class="status-${t.durum}">${talepDurumLabel(t.durum)}</span>
                     ${t.durum==='taslak'||t.durum==='onayBekliyor'?`<button onclick="deleteTalep(${t.id})" class="text-gray-600 hover:text-red-400 text-sm">&times;</button>`:''}
                 </div>
             </div>
             <div class="mb-3"><table class="w-full text-xs"><thead class="text-gray-500"><tr><th class="text-left p-1">Malzeme</th><th class="text-right p-1">Miktar</th><th class="text-left p-1">Birim</th><th class="text-right p-1">Tahm. Fiyat</th></tr></thead><tbody>`;
         (t.kalemler||[]).forEach(k=>{
-            html+=`<tr class="border-t border-gray-800"><td class="p-1">${k.malzeme}</td><td class="p-1 text-right">${k.miktar}</td><td class="p-1">${k.birim}</td><td class="p-1 text-right">${k.tahmiFiyat?'\u20BA'+fmtFull(k.tahmiFiyat):'-'}</td></tr>`;
+            const malzemeAdi=k.malzeme||k.malzemeAdi||'-';
+            const tahmiFiyat=k.tahmiFiyat||k.tapinanFiyat||0;
+            html+=`<tr class="border-t border-gray-800"><td class="p-1">${malzemeAdi}</td><td class="p-1 text-right">${k.miktar}</td><td class="p-1">${k.birim}</td><td class="p-1 text-right">${tahmiFiyat?'\u20BA'+fmtFull(tahmiFiyat):'-'}</td></tr>`;
         });
         html+=`</tbody></table></div>
             <div class="flex gap-2 flex-wrap">
@@ -4590,7 +4596,7 @@ function renderTalepler(){
 function openTalepForm(){
     const form=document.querySelector('#modal-talep form');if(form)form.reset();
     const projSel=document.getElementById('talep-project-select');
-    if(projSel){projSel.innerHTML='<option value="">Genel</option>';S.projects.forEach(p=>projSel.innerHTML+=`<option value="${p.id}">${p.name}</option>`);}
+    if(projSel){projSel.innerHTML='<option value="">Genel</option>';S.projects.forEach(p=>projSel.innerHTML+=`<option value="${p.id}">${p.ad||p.name||p.id}</option>`);}
     const depSel=document.getElementById('talep-departman');
     if(depSel){depSel.innerHTML='';DEPARTMANLAR.forEach(d=>depSel.innerHTML+=`<option value="${d.v}">${d.l}</option>`);}
     const acSel=document.getElementById('talep-aciliyet');
@@ -5801,14 +5807,14 @@ function renderIhaleler(){
         html+=`<div class="glass rounded-xl p-5 mb-3">
             <div class="flex items-start justify-between mb-3">
                 <div><h4 class="font-bold text-sm">${t.ihaleNo||''} - ${baslik}</h4>
-                <p class="text-[10px] text-gray-500">${proj?proj.name+' | ':''}${ihaleTipiLabel(t.ihaleTipi||'acik')} | ${kalemSayisi||1} kalem</p></div>
+                <p class="text-[10px] text-gray-500">${proj?(proj.ad||proj.name)+' | ':''}${ihaleTipiLabel(t.ihaleTipi||'acik')} | ${kalemSayisi||1} kalem</p></div>
                 <div class="flex items-center gap-2">
                     ${teklifSayisi>0?`<span class="text-[9px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full">${teklifSayisi} teklif</span>`:''}
                     <span class="status-${t.status}">${stName(t.status)}</span>
                     <button onclick="deleteItem('tender',${t.id})" class="text-gray-600 hover:text-red-400 text-sm">&times;</button>
                 </div>
             </div>
-            ${kalemSayisi>0?`<div class="mb-3 text-xs"><table class="w-full"><tbody>${(t.kalemler||[]).map(k=>`<tr class="border-t border-gray-800/50"><td class="py-1 text-gray-400">${k.malzeme}</td><td class="py-1 text-right">${k.miktar} ${k.birim}</td></tr>`).join('')}</tbody></table></div>`:`<p class="text-sm text-gray-400 mb-3">${t.item||baslik} — ${t.supplier||''}</p>`}
+            ${kalemSayisi>0?`<div class="mb-3 text-xs"><table class="w-full"><tbody>${(t.kalemler||[]).map(k=>`<tr class="border-t border-gray-800/50"><td class="py-1 text-gray-400">${k.malzeme||k.kalemAdi||k.ad||'-'}</td><td class="py-1 text-right">${k.miktar} ${k.birim}</td></tr>`).join('')}</tbody></table></div>`:`<p class="text-sm text-gray-400 mb-3">${t.item||baslik} — ${t.supplier||''}</p>`}
             ${toplamTutar>0?`<p class="text-lg font-bold text-orange-400 mb-3">\u20BA${fmtFull(toplamTutar)}</p>`:''}
             <div class="flex gap-2 flex-wrap">
                 <button onclick="openIhaleDetay(${t.id})" class="px-3 py-1.5 bg-gray-600/30 text-gray-300 hover:bg-gray-600/50 rounded text-xs transition-colors">Detay</button>
@@ -5837,7 +5843,7 @@ function openIhaleDetay(ihaleId){
     if(kalemler.length>0){
         html+=`<div><h4 class="text-sm font-semibold mb-2">Ihale Kalemleri</h4>
             <table class="w-full text-xs glass rounded-xl overflow-hidden"><thead class="bg-gray-800/50"><tr class="text-left text-gray-400"><th class="p-2">#</th><th class="p-2">Malzeme</th><th class="p-2 text-right">Miktar</th><th class="p-2">Birim</th></tr></thead><tbody>`;
-        kalemler.forEach((k,i)=>{html+=`<tr class="border-t border-gray-800"><td class="p-2">${i+1}</td><td class="p-2">${k.malzeme}</td><td class="p-2 text-right">${k.miktar}</td><td class="p-2">${k.birim}</td></tr>`;});
+        kalemler.forEach((k,i)=>{html+=`<tr class="border-t border-gray-800"><td class="p-2">${i+1}</td><td class="p-2">${k.malzeme||k.kalemAdi||k.ad||'-'}</td><td class="p-2 text-right">${k.miktar}</td><td class="p-2">${k.birim}</td></tr>`;});
         html+=`</tbody></table></div>`;
     }
     // Teklif karşılaştırma
@@ -6088,9 +6094,9 @@ function renderReports(){
     // All transactions
     const at=document.getElementById('report-all-transactions');
     let all=[];
-    S.projects.forEach(p=>all.push({type:'Proje',name:p.name,amount:p.budget,date:p.createdAt,status:p.status}));
-    S.tenders.forEach(t=>all.push({type:'Ihale',name:t.item,amount:t.amount,date:t.createdAt,status:t.status}));
-    S.sales.forEach(s=>all.push({type:'Satis',name:s.customer+' - '+s.product,amount:s.price,date:s.createdAt,status:s.status}));
+    S.projects.forEach(p=>all.push({type:'Proje',name:p.ad||p.name||'-',amount:p.butce||p.budget||0,date:p.createdAt,status:p.durum||p.status||'devam'}));
+    S.tenders.forEach(t=>all.push({type:'Ihale',name:t.baslik||t.item||'-',amount:t.kazananTeklifId?(t.teklifler||[]).find(x=>x.id===t.kazananTeklifId)?.toplamFiyat||t.amount||0:t.amount||0,date:t.createdAt,status:t.status||'pending'}));
+    S.sales.forEach(s=>all.push({type:'Satis',name:(s.musteriAdi||s.customer||'-')+' - '+(s.projeAdi||s.product||'-'),amount:s.toplamTutar||s.price||0,date:s.createdAt,status:s.status||s.asamaDurum||'active'}));
     // Date filter
     const ds=document.getElementById('report-date-start')?.value;
     const de=document.getElementById('report-date-end')?.value;
@@ -7149,13 +7155,16 @@ function renderSiparisler(){
     html+='</div>';
     orders.slice().reverse().forEach(o=>{
         const proj=o.projectId?S.projects.find(p=>p.id===o.projectId):null;
+        const projAdi=proj?(proj.ad||proj.name||''):'';
         const durum=o.durum||'olusturuldu';
         const teslimatSayisi=(o.teslimatlar||[]).length;
-        const bpiStr=o.bpiTarih?new Date(o.bpiTarih).toLocaleDateString('tr-TR'):'';
+        const bpiStr=o.bpiTarih?new Date(o.bpiTarih).toLocaleDateString('tr-TR'):(o.beklenenTarih?new Date(o.beklenenTarih).toLocaleDateString('tr-TR'):'');
+        const siparisNo=o.orderNo||o.siparisNo||'-';
+        const tedarikciAdi=o.tedarikciAdi||o.tedarikci||o.supplier||'';
         html+=`<div class="glass rounded-xl p-5 mb-3">
             <div class="flex items-start justify-between mb-3">
-                <div><h4 class="font-bold text-sm">${o.orderNo} <span class="text-[10px] text-gray-500 font-normal">${proj?proj.name:''}</span></h4>
-                <p class="text-[10px] text-gray-500">${o.tedarikciAdi||o.supplier||''} | ${(o.kalemler||[]).length} kalem${bpiStr?' | Termin: '+bpiStr:''}</p></div>
+                <div><h4 class="font-bold text-sm">${siparisNo} <span class="text-[10px] text-gray-500 font-normal">${projAdi}</span></h4>
+                <p class="text-[10px] text-gray-500">${tedarikciAdi} | ${(o.kalemler||[]).length} kalem${bpiStr?' | Termin: '+bpiStr:''}</p></div>
                 <div class="flex items-center gap-2">
                     ${teslimatSayisi>0?`<span class="text-[9px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full">${teslimatSayisi} teslimat</span>`:''}
                     <span class="status-${durum}">${siparisDurumLabel(durum)}</span>
@@ -7176,8 +7185,8 @@ function openSiparisDetay(orderId){
     const proj=o.projectId?S.projects.find(p=>p.id===o.projectId):null;
     let html=`<div class="space-y-4">
         <div class="flex items-center justify-between">
-            <div><h3 class="text-lg font-bold">${o.orderNo}</h3>
-            <p class="text-xs text-gray-500">${o.tedarikciAdi||o.supplier||''} ${proj?'| '+proj.name:''} | <span class="status-${o.durum||'olusturuldu'}">${siparisDurumLabel(o.durum||'olusturuldu')}</span></p></div>
+            <div><h3 class="text-lg font-bold">${o.orderNo||o.siparisNo||'-'}</h3>
+            <p class="text-xs text-gray-500">${o.tedarikciAdi||o.tedarikci||o.supplier||''} ${proj?'| '+(proj.ad||proj.name):''} | <span class="status-${o.durum||'olusturuldu'}">${siparisDurumLabel(o.durum||'olusturuldu')}</span></p></div>
         </div>
         <div><h4 class="text-sm font-semibold mb-2">Siparis Kalemleri</h4>
         <table class="w-full text-xs glass rounded-xl overflow-hidden"><thead class="bg-gray-800/50"><tr class="text-left text-gray-400"><th class="p-2">Malzeme</th><th class="p-2 text-right">Miktar</th><th class="p-2">Birim</th><th class="p-2 text-right">Birim Fiyat</th><th class="p-2 text-right">Toplam</th></tr></thead><tbody>`;
