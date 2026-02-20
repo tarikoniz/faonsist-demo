@@ -65,7 +65,15 @@ export async function GET(request: NextRequest) {
       prisma.sale.findMany(),
       prisma.activity.findMany({ orderBy: { createdAt: 'desc' }, take: 100 }),
       prisma.channel.findMany({
-        include: { members: true, messages: true, files: true },
+        include: {
+          members: true,
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            take: 100, // son 100 mesaj — performans için
+            include: { user: { select: { name: true } } },
+          },
+          files: true,
+        },
       }),
       prisma.user.findMany({
         select: {
@@ -361,14 +369,20 @@ export async function GET(request: NextRequest) {
     const messagesForState: Record<string, any[]> = {};
     channels.forEach((ch) => {
       const chKey = ch.legacyId || ch.id;
-      messagesForState[chKey] = ch.messages.map((m) => {
-        const msgUser = users.find((u) => u.id === m.userId);
+      messagesForState[chKey] = ch.messages.map((m: any) => {
+        // user relation'dan al, yoksa users listesinden bak, yoksa 'Bilinmiyor'
+        const userName = m.user?.name || users.find((u) => u.id === m.userId)?.name || 'Bilinmiyor';
         return {
           id: m.legacyId || m.id,
-          user: msgUser?.name || 'Bilinmiyor',
+          user: userName,
+          userId: m.userId,
           text: m.text,
           time: m.time || m.createdAt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
           mine: m.userId === user.id,
+          replyTo: null,
+          reactions: {},
+          readBy: [],
+          createdAt: m.createdAt.toISOString(),
         };
       });
     });

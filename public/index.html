@@ -5205,16 +5205,18 @@ function selectChannel(id){
     const ti=document.getElementById('typing-indicator');
     if(ti)ti.classList.add('hidden');
     markChannelRead(id);
-    // Socket.IO bağlı değilse API'dan güncel mesajları çek
-    if((!socket||!socket.connected)&&backendAvailable){
-        const headers={};
+    // Her kanal seçiminde API'dan güncel mesajları çek (socket bağlı olsa da)
+    if(backendAvailable){
+        const headers={'Content-Type':'application/json'};
         if(authToken)headers['Authorization']='Bearer '+authToken;
         fetch(API_BASE+'/api/messages?channelId='+encodeURIComponent(id),{headers})
             .then(r=>r.json())
             .then(d=>{
-                if(d.success&&d.data&&d.data.messages&&d.data.messages.length>0){
-                    S.messages[id]=d.data.messages;
-                    renderMessages();
+                if(d.success&&d.data&&d.data.messages){
+                    // Sadece DB'den gelen gerçek mesajları göster (tempId'li olanları koru)
+                    const pending=(S.messages[id]||[]).filter(m=>typeof m.id==='number'&&m.id>Date.now()-30000);
+                    S.messages[id]=[...d.data.messages,...pending];
+                    if(S.currentChannel===id)renderMessages();
                 }
             })
             .catch(e=>console.warn('[Msg] Mesaj yuklenemedi:',e));
@@ -7246,6 +7248,15 @@ function completeLogin(){
     initSocket();requestNotifPermission();startActivityWatcher();
     loadAiProviders();loadAiSessions();subscribePushNotifications();loadDashboardCharts();
     recordPuantajGiris();
+    // Giriş sonrası aktif kanalın mesajlarını API'dan çek
+    if(backendAvailable&&S.currentChannel){
+        const hdrs={'Content-Type':'application/json'};
+        if(authToken)hdrs['Authorization']='Bearer '+authToken;
+        fetch(API_BASE+'/api/messages?channelId='+encodeURIComponent(S.currentChannel),{headers:hdrs})
+            .then(r=>r.json())
+            .then(d=>{if(d.success&&d.data&&d.data.messages){S.messages[S.currentChannel]=d.data.messages;renderMessages();}})
+            .catch(()=>{});
+    }
     setTimeout(()=>girisKritikModal(),500);
 }
 
