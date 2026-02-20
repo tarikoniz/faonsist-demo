@@ -30,6 +30,7 @@ interface UserPresence {
 interface MessageSendData {
   channelId: string;
   text: string;
+  tempId?: string | number | null;
   replyTo?: { id: string; text: string; user: string } | null;
 }
 
@@ -277,7 +278,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
     socket.on(
       'message:send',
       withRateLimit(async (data: unknown) => {
-        const { channelId, text, replyTo } = data as MessageSendData;
+        const { channelId, text, replyTo, tempId } = data as MessageSendData;
         if (!channelId || !text?.trim()) return;
 
         // Kanal üyelik kontrolü
@@ -324,6 +325,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
 
           const msg = {
             id: message.id,
+            tempId: tempId ?? null, // Frontend'in geçici ID'si — çift mesaj önleme için
             user: userName,
             userId: realUserId,
             text: message.text,

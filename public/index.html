@@ -5319,7 +5319,7 @@ function sendMessage(){
     S.messages[S.currentChannel].push(msg);
     // Socket broadcast — bağlıysa Socket.IO, değilse API fallback
     if(socket&&socket.connected){
-        socket.emit('message:send',{channelId:S.currentChannel,text:txt,id:msgId,replyTo:replyToMsg||null});
+        socket.emit('message:send',{channelId:S.currentChannel,text:txt,tempId:msgId,replyTo:replyToMsg||null});
         // Check for @mentions
         const mentions=txt.match(/@(\S+)/g);
         if(mentions){
@@ -8363,18 +8363,29 @@ function initSocket(){
 
         // ---- Incoming messages ----
         socket.on('message:new',(msg)=>{
-            if(!S.messages[msg.channelId])S.messages[msg.channelId]=[];
-            S.messages[msg.channelId].push({
+            const chId=String(msg.channelId);
+            if(!S.messages[chId])S.messages[chId]=[];
+            const newMsg={
                 id:msg.id,user:msg.user,text:msg.text,time:msg.time,
-                mine:msg.userId===(currentUser?currentUser.id:''),
+                mine:msg.userId===(currentUser?currentUser.id:'') || msg.user===(currentUser?currentUser.name:''),
                 replyTo:msg.replyTo||null,reactions:msg.reactions||{},readBy:msg.readBy||[]
-            });
-            if(msg.channelId===S.currentChannel)renderMessages();
-            else updateChannelBadge(msg.channelId);
-            // Sound + push
-            if(msg.userId!==(currentUser?currentUser.id:'')){
+            };
+            // tempId ile eşleşen yerel mesajı replace et (çift mesaj önleme)
+            const arr=S.messages[chId];
+            const tempIdx=msg.tempId!=null ? arr.findIndex(m=>m.id==msg.tempId) : -1;
+            if(tempIdx>=0){
+                arr[tempIdx]=newMsg; // yerel temp mesajı server ID'li ile değiştir
+            } else {
+                // Aynı kullanıcıdan aynı text+time zaten var mı? (güvenlik filtresi)
+                const dup=arr.find(m=>m.id===msg.id);
+                if(!dup) arr.push(newMsg);
+            }
+            if(chId===String(S.currentChannel))renderMessages();
+            else updateChannelBadge(chId);
+            // Sound + push — sadece başkasının mesajında
+            if(!newMsg.mine){
                 playNotifSound();
-                showBrowserNotif(msg.user+' (#'+msg.channelId+')',msg.text.replace(/<[^>]*>/g,'').substring(0,80));
+                showBrowserNotif(msg.user+' (#'+chId+')',msg.text.replace(/<[^>]*>/g,'').substring(0,80));
             }
             save();
         });
