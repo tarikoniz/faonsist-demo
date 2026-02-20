@@ -1789,7 +1789,14 @@
                         <div id="report-module-summary" class="space-y-3"></div>
                     </div>
                     <div class="glass rounded-xl p-5">
-                        <h4 class="text-sm font-semibold mb-4">Aylik Trend</h4>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-semibold">Aylik Trend</h4>
+                            <div class="flex gap-3">
+                                <span class="text-[9px] flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>Satis</span>
+                                <span class="text-[9px] flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>Ihale</span>
+                                <span class="text-[9px] flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500 inline-block"></span>Proje</span>
+                            </div>
+                        </div>
                         <div class="flex items-end gap-2 h-40" id="report-chart"></div>
                     </div>
                 </div>
@@ -5645,6 +5652,9 @@ function renderReports(){
     const tenderTotal=S.tenders.reduce((s,t)=>s+t.amount,0);
     const salesTotal=S.sales.reduce((s,x)=>s+x.price,0);
     const paidTotal=S.sales.reduce((s,x)=>s+x.paid,0);
+    const buAy=new Date().toISOString().slice(0,7);
+    const buAySatis=S.sales.filter(s=>s.createdAt&&s.createdAt.slice(0,7)===buAy).reduce((t,s)=>t+(s.price||0),0);
+    const buAyTahsilat=S.sales.filter(s=>s.createdAt&&s.createdAt.slice(0,7)===buAy).reduce((t,s)=>t+(s.paid||0),0);
     ms.innerHTML=`
         <div class="flex justify-between text-xs"><span class="text-gray-400">Projeler</span><span class="font-semibold">${S.projects.length} adet - \u20BA${fmt(projBudget)}</span></div>
         <div class="flex justify-between text-xs"><span class="text-gray-400">Ihaleler</span><span class="font-semibold">${S.tenders.length} adet - \u20BA${fmt(tenderTotal)}</span></div>
@@ -5652,14 +5662,44 @@ function renderReports(){
         <div class="flex justify-between text-xs"><span class="text-gray-400">Tahsilat</span><span class="font-semibold text-green-400">\u20BA${fmt(paidTotal)}</span></div>
         <div class="flex justify-between text-xs"><span class="text-gray-400">Kalan Alacak</span><span class="font-semibold text-orange-400">\u20BA${fmt(salesTotal-paidTotal)}</span></div>
         <div class="flex justify-between text-xs border-t border-gray-700 pt-2 mt-2"><span class="text-gray-400">Mesajlar</span><span class="font-semibold">${Object.values(S.messages).flat().length} adet</span></div>
+        <div class="border-t border-gray-700 pt-2 mt-2 space-y-1">
+            <div class="flex justify-between text-xs"><span class="text-gray-400">Bu Ay Ciro</span><span class="font-semibold text-blue-400">\u20BA${fmtFull(buAySatis)}</span></div>
+            <div class="flex justify-between text-xs"><span class="text-gray-400">Bu Ay Tahsilat</span><span class="font-semibold text-green-400">\u20BA${fmtFull(buAyTahsilat)}</span></div>
+        </div>
     `;
-    // Chart
+    // Chart — Son 6 ay gerçek veriye dayalı
     const rc=document.getElementById('report-chart');
-    const months=['Oca','Sub','Mar','Nis','May','Haz'];
-    rc.innerHTML=months.map(m=>{
-        const h=Math.max(15,Math.random()*80+20);
-        return `<div class="flex-1 flex flex-col items-center gap-1"><div class="w-full flex justify-center" style="height:150px;align-items:flex-end"><div class="chart-bar bg-gradient-to-t from-blue-600 to-cyan-400 w-5" style="height:${h}%"></div></div><span class="text-[10px] text-gray-500">${m}</span></div>`;
-    }).join('');
+    if(rc){
+        const aylar=[];
+        const simdi=new Date();
+        for(let i=5;i>=0;i--){
+            const d=new Date(simdi.getFullYear(),simdi.getMonth()-i,1);
+            aylar.push({
+                key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),
+                label:d.toLocaleString('tr-TR',{month:'short'}),
+                satis:0,ihale:0,proje:0
+            });
+        }
+        S.sales.forEach(s=>{if(!s.createdAt)return;const k=s.createdAt.slice(0,7);const ay=aylar.find(a=>a.key===k);if(ay)ay.satis+=(s.price||0);});
+        S.tenders.forEach(t=>{if(!t.createdAt)return;const k=t.createdAt.slice(0,7);const ay=aylar.find(a=>a.key===k);if(ay)ay.ihale+=(t.amount||0);});
+        S.projects.forEach(p=>{if(!p.createdAt)return;const k=p.createdAt.slice(0,7);const ay=aylar.find(a=>a.key===k);if(ay)ay.proje+=(p.budget||0);});
+        const maxVal=Math.max(...aylar.map(a=>a.satis+a.ihale+a.proje),1);
+        rc.innerHTML=aylar.map(a=>{
+            const toplam=a.satis+a.ihale+a.proje;
+            const satisH=Math.max(2,(a.satis/maxVal)*90);
+            const ihaleH=(a.ihale/maxVal)*90;
+            const projeH=(a.proje/maxVal)*90;
+            const tip=`${a.label}: \u20BA${fmtFull(toplam)} | Satis:\u20BA${fmtFull(a.satis)} Ihale:\u20BA${fmtFull(a.ihale)} Proje:\u20BA${fmtFull(a.proje)}`;
+            return `<div class="flex-1 flex flex-col items-center gap-1" title="${tip}">
+                <div class="w-full flex flex-col justify-end items-center gap-0" style="height:150px">
+                    ${projeH>0?`<div class="w-4 bg-gradient-to-t from-purple-700 to-purple-400 rounded-t" style="height:${projeH.toFixed(1)}%"></div>`:''}
+                    ${ihaleH>0?`<div class="w-4 bg-gradient-to-t from-green-700 to-green-400 ${projeH<=0?'rounded-t':''}" style="height:${ihaleH.toFixed(1)}%"></div>`:''}
+                    <div class="w-4 bg-gradient-to-t from-blue-600 to-cyan-400 ${(ihaleH<=0&&projeH<=0)?'rounded-t':''} rounded-b" style="height:${satisH.toFixed(1)}%"></div>
+                </div>
+                <span class="text-[10px] text-gray-500">${a.label}</span>
+            </div>`;
+        }).join('');
+    }
     // All transactions
     const at=document.getElementById('report-all-transactions');
     let all=[];
