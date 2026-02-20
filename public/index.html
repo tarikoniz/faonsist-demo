@@ -8349,6 +8349,11 @@ let soundMuted=false;
 function initSocket(){
     if(!backendAvailable)return;
     try{
+        // Eğer socket zaten bağlıysa ve auth değiştiyse yeniden bağlan
+        if(socket&&socket.connected){
+            socket.disconnect();
+            socket=null;
+        }
         // Token varsa JWT ile, yoksa userName ile guest olarak bağlan
         const socketAuth=authToken
             ?{token:authToken}
