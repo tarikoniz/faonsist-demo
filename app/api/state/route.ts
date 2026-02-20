@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       prisma.user.findMany({
         select: {
           id: true, name: true, phone: true, email: true, role: true,
-          permissions: true, active: true, department: true,
+          permissions: true, active: true, department: true, customModules: true,
         },
       }),
       prisma.warehouse.findMany(),
@@ -343,6 +343,7 @@ export async function GET(request: NextRequest) {
       role: u.role,
       perms: u.permissions,
       active: u.active,
+      customModules: u.customModules ?? undefined,
     }));
 
     // Channels & Messages => S formatı
@@ -1345,6 +1346,18 @@ export async function PUT(request: NextRequest) {
               yoneticiId: str(d.yoneticiId), aciklama: str(d.aciklama),
               aktif: bool(d.aktif, true),
             },
+          });
+        }
+      }
+
+      // --- USER CUSTOM MODULES ---
+      // S.users ID'leri integer (legacy), DB UUID kullanıyor — email ile eşleştir
+      if (Array.isArray(S.users)) {
+        for (const u of S.users) {
+          if (!u.email) continue;
+          await tx.user.updateMany({
+            where: { email: String(u.email) },
+            data: { customModules: u.customModules ?? null },
           });
         }
       }

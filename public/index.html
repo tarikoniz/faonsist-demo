@@ -2239,6 +2239,18 @@
                 <label class="block text-xs mb-1.5 text-gray-400">Aciklama</label>
                 <textarea id="channel-settings-desc" rows="3" class="w-full bg-gray-800/80 border border-gray-700 rounded-lg px-4 py-2.5 text-sm" placeholder="Bu kanal ne icin kullaniliyor?"></textarea>
             </div>
+            <div>
+                <label class="block text-xs mb-1.5 text-gray-400">Erisim — Kimler Gorebilir?</label>
+                <div class="bg-gray-800/60 border border-gray-700 rounded-lg p-3 space-y-2">
+                    <label class="flex items-center gap-2 text-xs cursor-pointer hover:text-white"><input type="checkbox" name="cr_Yonetici" class="accent-blue-500"> <span>Yonetici</span></label>
+                    <label class="flex items-center gap-2 text-xs cursor-pointer hover:text-white"><input type="checkbox" name="cr_Proje Muduru" class="accent-blue-500"> <span>Proje Muduru</span></label>
+                    <label class="flex items-center gap-2 text-xs cursor-pointer hover:text-white"><input type="checkbox" name="cr_Muhasebe" class="accent-blue-500"> <span>Muhasebe</span></label>
+                    <label class="flex items-center gap-2 text-xs cursor-pointer hover:text-white"><input type="checkbox" name="cr_Satin Alma" class="accent-blue-500"> <span>Satin Alma</span></label>
+                    <label class="flex items-center gap-2 text-xs cursor-pointer hover:text-white"><input type="checkbox" name="cr_Satis" class="accent-blue-500"> <span>Satis</span></label>
+                    <label class="flex items-center gap-2 text-xs cursor-pointer hover:text-white"><input type="checkbox" name="cr_Izleyici" class="accent-blue-500"> <span>Izleyici</span></label>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1">Hicbiri secilmezse tum roller erisebilir</p>
+            </div>
             <div class="flex gap-2 pt-2">
                 <button onclick="saveChannelSettings()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-medium text-sm transition-colors">💾 Kaydet</button>
                 <button onclick="archiveChannel(document.getElementById('channel-settings-id').value)" class="px-4 bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-600/30 text-yellow-400 py-2.5 rounded-lg text-sm transition-colors">🗄️ Arsivle</button>
@@ -5086,6 +5098,12 @@ function openChannelSettings(chId,e){
     document.getElementById('channel-settings-id').value=chId;
     document.getElementById('channel-settings-name').value=ch.name||'';
     document.getElementById('channel-settings-desc').value=ch.description||'';
+    // allowedRoles checkboxlarını güncelle
+    const ar=ch.allowedRoles||[];
+    ['Yonetici','Proje Muduru','Muhasebe','Satin Alma','Satis','Izleyici'].forEach(r=>{
+        const cb=document.querySelector(`input[name="cr_${r}"]`);
+        if(cb)cb.checked=ar.includes(r);
+    });
     openModal('modal-channel-settings');
 }
 
@@ -5098,6 +5116,12 @@ function saveChannelSettings(){
     if(!ch)return;
     ch.name=newName;
     ch.description=newDesc;
+    // Seçili rolleri allowedRoles olarak kaydet (boş = herkes)
+    const checked=['Yonetici','Proje Muduru','Muhasebe','Satin Alma','Satis','Izleyici'].filter(r=>{
+        const cb=document.querySelector(`input[name="cr_${r}"]`);
+        return cb&&cb.checked;
+    });
+    ch.allowedRoles=checked;
     save();renderChannels();closeModal('modal-channel-settings');
     showNotif('Kanal guncellendi: #'+newName);
 }
@@ -5139,10 +5163,18 @@ function renderChannels(){
         if(ch.isFavorite===undefined)ch.isFavorite=false;
         if(ch.type===undefined)ch.type='channel';
         if(ch.description===undefined)ch.description='';
+        if(ch.allowedRoles===undefined)ch.allowedRoles=[];
     });
 
-    const favoriler=S.channels.filter(ch=>ch.isFavorite&&!ch.archived&&ch.type!=='dm');
-    const normalKanallar=S.channels.filter(ch=>!ch.isFavorite&&!ch.archived&&ch.type!=='dm');
+    // Rol bazlı kanal filtresi — allowedRoles boşsa herkes görebilir
+    const userRole=currentUser?.role||'';
+    const kanalFiltrele=ch=>{
+        if(!ch.allowedRoles||ch.allowedRoles.length===0)return true;
+        return ch.allowedRoles.includes(userRole);
+    };
+
+    const favoriler=S.channels.filter(ch=>ch.isFavorite&&!ch.archived&&ch.type!=='dm'&&kanalFiltrele(ch));
+    const normalKanallar=S.channels.filter(ch=>!ch.isFavorite&&!ch.archived&&ch.type!=='dm'&&kanalFiltrele(ch));
     const dmKanallar=S.channels.filter(ch=>ch.type==='dm'&&!ch.archived);
 
     let html='';
@@ -7125,7 +7157,10 @@ async function doLogin(e){
                 authToken=d.data.token;
                 refreshToken=d.data.refreshToken;
                 try{localStorage.setItem('faonsist-token',authToken);}catch(e){}
-                currentUser={id:d.data.user.id,name:d.data.user.name,email:d.data.user.email,phone:d.data.user.phone,role:d.data.user.role,perms:d.data.user.permissions};
+                // DB İngilizce rol adlarını frontend Türkçe RBAC rol adlarına çevir
+                const ROLE_MAP={'admin':'Yonetici','manager':'Yonetici','project_manager':'Proje Muduru','accountant':'Muhasebe','purchasing':'Satin Alma','sales_manager':'Satis','warehouse_manager':'Satin Alma','employee':'Izleyici','viewer':'Izleyici'};
+                const mappedRole=ROLE_MAP[d.data.user.role]||d.data.user.role;
+                currentUser={id:d.data.user.id,name:d.data.user.name,email:d.data.user.email,phone:d.data.user.phone,role:mappedRole,perms:d.data.user.permissions};
                 isLoggedIn=true;
                 // Backend'den state yukle
                 await load();
@@ -7154,7 +7189,14 @@ async function doLogin(e){
 
 function completeLogin(){
     // Ensure currentUser always points to latest S.users data
-    if(currentUser&&currentUser.id){currentUser=S.users.find(u=>u.id===currentUser.id)||currentUser;}
+    // UUID (backend) veya integer (local) ID ile eşleştir, bulamazsa email ile dene
+    if(currentUser&&currentUser.id){
+        const found=S.users.find(u=>u.id===currentUser.id||u.email===currentUser.email);
+        if(found){
+            // S.users'daki customModules ve diğer alanları koru, ama role'ü mevcut (çevrilmiş) tut
+            currentUser=Object.assign({},found,{role:currentUser.role||found.role});
+        }
+    }
     document.getElementById('landing-page').style.display='none';
     document.getElementById('login-screen').style.display='none';
     document.getElementById('main-app').style.display='flex';

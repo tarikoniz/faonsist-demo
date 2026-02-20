@@ -22,7 +22,8 @@ model User {
   phone        String?
   password     String   // bcrypt hash
   role         String   @default("employee") // admin, manager, project_manager, sales_manager, accountant, warehouse_manager, employee, viewer
-  permissions  String?  // custom permission description
+  permissions    String?  // custom permission description
+  customModules  Json?    // per-user module visibility overrides {moduleId: boolean}
   avatar       String?
   department   String?
   active       Boolean  @default(true)
