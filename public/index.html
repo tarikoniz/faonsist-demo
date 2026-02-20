@@ -4712,8 +4712,8 @@ function deleteItem(type,id){
 }
 
 // ===================== FORMAT =====================
-function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return n.toString();}
-function fmtFull(n){return new Intl.NumberFormat('tr-TR').format(n);}
+function fmt(n){n=Number(n)||0;if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return n.toString();}
+function fmtFull(n){return new Intl.NumberFormat('tr-TR').format(Number(n)||0);}
 function stName(s){return{pending:'Hazirlandi',reviewing:'Kontrol',approved:'Onaylandi',rejected:'Reddedildi',active:'Aktif',completed:'Tamamlandi',lead:'Potansiyel',meeting:'Gorusme',proposal:'Teklif',negotiation:'Muzakere',contract:'Sozlesme',taslak:'Taslak',onayBekliyor:'Onay Bekliyor',onaylandi:'Onaylandi',ihaleyeCevrildi:'Ihaleye Cevrildi',reddedildi:'Reddedildi',olusturuldu:'Olusturuldu',gonderildi:'Gonderildi',kismiTeslimat:'Kismi Teslimat',tamamlandi:'Tamamlandi',iptal:'Iptal'}[s]||s;}
 
 // ===================== RENDER ALL =====================

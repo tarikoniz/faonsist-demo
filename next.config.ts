@@ -39,6 +39,15 @@ const nextConfig: NextConfig = {
           ...(isProd ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }] : []),
         ],
       },
+      // index.html — hiç cache'leme (her zaman güncel kodu al)
+      {
+        source: '/index.html',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      },
       // CORS — sadece API routes
       {
         source: '/api/:path*',
