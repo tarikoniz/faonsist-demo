@@ -7,12 +7,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'faonsist-dev-secret-key-min-32-chars!!'
-);
-
 const isProd = process.env.NODE_ENV === 'production';
 const allowedOrigin = process.env.CORS_ORIGIN || (isProd ? 'https://faonsist.com' : '*');
+
+// JWT_SECRET lazy — modül yüklenirken env henüz set edilmemiş olabilir
+function getJwtSecret() {
+  return new TextEncoder().encode(
+    process.env.JWT_SECRET || 'faonsist-dev-secret-key-min-32-chars!!'
+  );
+}
 
 // Routes that don't require authentication
 const PUBLIC_ROUTES = [
@@ -117,47 +120,48 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // ---- Allow public routes (no auth needed) ----
+  // ---- Token parse (hem public hem protected route'larda) ----
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (token) {
+    try {
+      const { payload } = await jwtVerify(token, getJwtSecret(), { issuer: 'faonsist' });
+      // Kullanıcı bilgisini header'a ekle — public route'larda da (mine hesaplamak için)
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-user-id', payload.userId as string);
+      requestHeaders.set('x-user-email', payload.email as string);
+      requestHeaders.set('x-user-role', payload.role as string);
+      requestHeaders.set('x-user-name', payload.name as string);
+
+      const response = NextResponse.next({ request: { headers: requestHeaders } });
+      response.headers.set('X-RateLimit-Remaining', String(rateResult.remaining));
+      return response;
+    } catch {
+      // Token geçersiz
+      if (PUBLIC_ROUTES.includes(pathname)) {
+        const response = NextResponse.next();
+        response.headers.set('X-RateLimit-Remaining', String(rateResult.remaining));
+        return response;
+      }
+      return NextResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Gecersiz veya suresi dolmus token' } },
+        { status: 401 }
+      );
+    }
+  }
+
+  // Token yok
   if (PUBLIC_ROUTES.includes(pathname)) {
     const response = NextResponse.next();
     response.headers.set('X-RateLimit-Remaining', String(rateResult.remaining));
     return response;
   }
 
-  // ---- Verify JWT token ----
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json(
-      { success: false, error: { code: 'UNAUTHORIZED', message: 'Token bulunamadi' } },
-      { status: 401 }
-    );
-  }
-
-  const token = authHeader.slice(7);
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, { issuer: 'faonsist' });
-
-    // Add user info to headers for downstream use
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-user-id', payload.userId as string);
-    requestHeaders.set('x-user-email', payload.email as string);
-    requestHeaders.set('x-user-role', payload.role as string);
-    requestHeaders.set('x-user-name', payload.name as string);
-
-    const response = NextResponse.next({
-      request: { headers: requestHeaders },
-    });
-
-    // Rate limit headers
-    response.headers.set('X-RateLimit-Remaining', String(rateResult.remaining));
-
-    return response;
-  } catch {
-    return NextResponse.json(
-      { success: false, error: { code: 'UNAUTHORIZED', message: 'Gecersiz veya suresi dolmus token' } },
-      { status: 401 }
-    );
-  }
+  return NextResponse.json(
+    { success: false, error: { code: 'UNAUTHORIZED', message: 'Token bulunamadi' } },
+    { status: 401 }
+  );
 }
 
 export const config = {

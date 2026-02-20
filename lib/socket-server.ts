@@ -127,8 +127,19 @@ async function isChannelMember(channelId: string, userId: string): Promise<boole
 
   // Cache miss — DB'den çek
   try {
+    // channelId legacyId veya UUID olabilir — önce channel'ı bul
+    const channel = await prisma.channel.findFirst({
+      where: { OR: [{ legacyId: channelId }, { id: channelId }] },
+      select: { id: true },
+    });
+
+    if (!channel) {
+      // Kanal yoksa izin ver (henüz oluşturulmamış legacy kanal)
+      return true;
+    }
+
     const members = await prisma.channelMember.findMany({
-      where: { channelId },
+      where: { channelId: channel.id },
       select: { userId: true },
     });
     const memberSet = new Set(members.map(m => m.userId));
