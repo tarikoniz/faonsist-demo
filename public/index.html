@@ -5205,6 +5205,20 @@ function selectChannel(id){
     const ti=document.getElementById('typing-indicator');
     if(ti)ti.classList.add('hidden');
     markChannelRead(id);
+    // Socket.IO bağlı değilse API'dan güncel mesajları çek
+    if((!socket||!socket.connected)&&backendAvailable){
+        const headers={};
+        if(authToken)headers['Authorization']='Bearer '+authToken;
+        fetch(API_BASE+'/api/messages?channelId='+encodeURIComponent(id),{headers})
+            .then(r=>r.json())
+            .then(d=>{
+                if(d.success&&d.data&&d.data.messages&&d.data.messages.length>0){
+                    S.messages[id]=d.data.messages;
+                    renderMessages();
+                }
+            })
+            .catch(e=>console.warn('[Msg] Mesaj yuklenemedi:',e));
+    }
     // Her zaman chat view'ına geç
     if(typeof connViewMode!=='undefined'&&connViewMode!=='chat'){
         switchConnectView('chat');
@@ -5303,7 +5317,7 @@ function sendMessage(){
         readBy:[currentUser?currentUser.id:'']
     };
     S.messages[S.currentChannel].push(msg);
-    // Socket broadcast
+    // Socket broadcast — bağlıysa Socket.IO, değilse API fallback
     if(socket&&socket.connected){
         socket.emit('message:send',{channelId:S.currentChannel,text:txt,id:msgId,replyTo:replyToMsg||null});
         // Check for @mentions
@@ -5312,6 +5326,15 @@ function sendMessage(){
             const mentionedIds=mentions.map(m=>m.slice(1)).map(name=>S.users.find(u=>u.name===name)).filter(Boolean).map(u=>u.id);
             if(mentionedIds.length>0)socket.emit('mention:notify',{channelId:S.currentChannel,messageId:msgId,mentionedUserIds:mentionedIds});
         }
+    } else if(backendAvailable){
+        // Socket.IO bağlı değil — API üzerinden gönder (diğer kullanıcılar load() ile görecek)
+        const headers={'Content-Type':'application/json'};
+        if(authToken)headers['Authorization']='Bearer '+authToken;
+        fetch(API_BASE+'/api/messages',{
+            method:'POST',
+            headers,
+            body:JSON.stringify({channelId:S.currentChannel,text:txt,userName,replyTo:replyToMsg||null})
+        }).catch(e=>console.warn('[Msg] API fallback hatasi:',e));
     }
     inp.value='';
     cancelReply();
@@ -8324,9 +8347,13 @@ let replyToMsg=null;
 let soundMuted=false;
 
 function initSocket(){
-    if(!backendAvailable||!authToken)return;
+    if(!backendAvailable)return;
     try{
-        socket=io(window.location.origin,{auth:{token:authToken},transports:['websocket','polling']});
+        // Token varsa JWT ile, yoksa userName ile guest olarak bağlan
+        const socketAuth=authToken
+            ?{token:authToken}
+            :{userName:currentUser?currentUser.name:'Misafir'};
+        socket=io(window.location.origin,{auth:socketAuth,transports:['websocket','polling']});
         socket.on('connect',()=>{
             console.log('[Socket] Connected:',socket.id);
             // Join current channel

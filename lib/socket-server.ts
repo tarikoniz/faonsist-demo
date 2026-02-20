@@ -106,6 +106,9 @@ const CHANNEL_CACHE_TTL = 5 * 60_000; // 5 dakika
 const channelCacheExpiry = new Map<string, number>();
 
 async function isChannelMember(channelId: string, userId: string): Promise<boolean> {
+  // Guest kullanıcılar (token olmadan bağlananlar) tüm kanallara erişebilir
+  if (userId.startsWith('guest_')) return true;
+
   const now = Date.now();
   const cacheKey = channelId;
 
@@ -130,10 +133,11 @@ async function isChannelMember(channelId: string, userId: string): Promise<boole
     const memberSet = new Set(members.map(m => m.userId));
     channelMemberCache.set(cacheKey, memberSet);
     channelCacheExpiry.set(cacheKey, now + CHANNEL_CACHE_TTL);
-    return memberSet.has(userId);
+    // DB'de üye bulunamazsa da izin ver (legacy kanal sistemi)
+    return memberSet.size === 0 ? true : memberSet.has(userId);
   } catch {
-    // DB hatası durumunda güvenli tarafta kal
-    return false;
+    // DB hatası durumunda izin ver
+    return true;
   }
 }
 
@@ -172,22 +176,31 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
     pingTimeout: 20000,
   });
 
-  // ---- JWT Authentication Middleware ----
+  // ---- JWT Authentication Middleware (opsiyonel — tokensız da bağlanabilir) ----
   io.use(async (socket, next) => {
     try {
       const token =
         socket.handshake.auth?.token ||
         socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
-      if (!token) return next(new Error('Authentication required'));
-
-      const payload: TokenPayload | null = await verifyAccessToken(token);
-      if (!payload) return next(new Error('Invalid token'));
-
-      // Socket.data kullan — `as any` yerine tip-güvenli
-      socket.data.userId = payload.userId;
-      socket.data.userName = payload.name;
-      socket.data.userRole = payload.role;
+      if (token) {
+        const payload: TokenPayload | null = await verifyAccessToken(token);
+        if (payload) {
+          socket.data.userId = payload.userId;
+          socket.data.userName = payload.name;
+          socket.data.userRole = payload.role;
+        } else {
+          // Token var ama geçersiz — guest olarak devam et
+          socket.data.userId = `guest_${socket.id}`;
+          socket.data.userName = socket.handshake.auth?.userName || 'Misafir';
+          socket.data.userRole = 'Izleyici';
+        }
+      } else {
+        // Token yok — guest olarak bağlan (userName'i handshake'den al)
+        socket.data.userId = `guest_${socket.id}`;
+        socket.data.userName = socket.handshake.auth?.userName || 'Misafir';
+        socket.data.userRole = 'Izleyici';
+      }
       next();
     } catch {
       next(new Error('Authentication failed'));

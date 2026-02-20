@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   '/api/auth/reset-password',
   '/api/health',
   '/api/docs',
+  '/api/messages', // Token olmadan da mesaj gönderilebilsin (Socket.IO fallback)
 ];
 
 // Routes that should be completely ignored by middleware

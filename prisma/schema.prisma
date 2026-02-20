@@ -657,14 +657,14 @@ model Message {
   id        String   @id @default(uuid())
   legacyId  Int?
   channelId String
-  userId    String
+  userId    String?
   text      String
   time      String?
   mine      Boolean  @default(false) // will be computed on frontend
   createdAt DateTime @default(now())
 
   channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([channelId, createdAt])
   @@index([userId])
