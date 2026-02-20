@@ -7151,12 +7151,17 @@ function goToLogin(){
     document.getElementById('main-app').style.display='none';
     document.body.style.overflow='hidden';
 }
-function quickDemoLogin(userId){
-    const user=S.users.find(u=>u.id===userId);
-    if(!user)return;
-    currentUser=user;
-    isLoggedIn=true;
-    completeLogin();
+async function quickDemoLogin(userId){
+    // userId: 1=Tarik(admin), 2=Mehmet(proje), 3=Ayse(muhasebe)
+    const demoMap={1:{email:'tarik@faonsist.com',password:'1234'},2:{email:'mehmet@faonsist.com',password:'1234'},3:{email:'ayse@faonsist.com',password:'1234'}};
+    const creds=demoMap[userId];
+    if(!creds)return;
+    // Email/pass formunu doldur ve backend login yap
+    const emailEl=document.getElementById('login-email');
+    const passEl=document.getElementById('login-pass');
+    if(emailEl)emailEl.value=creds.email;
+    if(passEl)passEl.value=creds.password;
+    await doLogin(null);
 }
 async function doLogin(e){
     if(e)e.preventDefault();
@@ -8349,16 +8354,17 @@ let soundMuted=false;
 function initSocket(){
     if(!backendAvailable)return;
     try{
-        // Eğer socket zaten bağlıysa ve auth değiştiyse yeniden bağlan
-        if(socket&&socket.connected){
-            socket.disconnect();
+        // Eski socket varsa tamamen kapat ve temizle
+        if(socket){
+            try{socket.removeAllListeners();socket.disconnect();}catch(e){}
             socket=null;
         }
-        // Token varsa JWT ile, yoksa userName ile guest olarak bağlan
+        // Token varsa JWT ile bağlan — token yoksa socket başlatma (login gerekmeden bağlanınca Misafir görünüyor)
+        if(!authToken&&!isLoggedIn)return;
         const socketAuth=authToken
             ?{token:authToken}
             :{userName:currentUser?currentUser.name:'Misafir'};
-        socket=io(window.location.origin,{auth:socketAuth,transports:['websocket','polling']});
+        socket=io(window.location.origin,{auth:socketAuth,transports:['websocket','polling'],forceNew:true});
         socket.on('connect',()=>{
             console.log('[Socket] Connected:',socket.id);
             // Join current channel

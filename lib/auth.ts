@@ -9,8 +9,17 @@ import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { prisma } from './prisma';
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'faonsist-dev-secret-key-min-32-chars!!');
-const REFRESH_SECRET = new TextEncoder().encode(process.env.REFRESH_TOKEN_SECRET || 'faonsist-refresh-dev-secret-key!!');
+// JWT_SECRET lazy getter — modül yüklenirken env henüz set edilmemiş olabilir
+// Bu yüzden her çağrıda process.env'den okuyoruz
+function getJwtSecret() {
+  return new TextEncoder().encode(process.env.JWT_SECRET || 'faonsist-dev-secret-key-min-32-chars!!');
+}
+function getRefreshSecret() {
+  return new TextEncoder().encode(process.env.REFRESH_TOKEN_SECRET || 'faonsist-refresh-dev-secret-key!!');
+}
+// Geriye dönük uyumluluk için sabitler (sign sırasında zaten env yüklü olduğundan OK)
+const JWT_SECRET = getJwtSecret();
+const REFRESH_SECRET = getRefreshSecret();
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 const REFRESH_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
 
@@ -94,7 +103,7 @@ export async function signRefreshToken(userId: string, family?: string): Promise
 
 export async function verifyAccessToken(token: string): Promise<TokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET, {
+    const { payload } = await jwtVerify(token, getJwtSecret(), {
       issuer: 'faonsist',
     });
     return payload as TokenPayload;
@@ -133,7 +142,7 @@ export async function verifyRefreshToken(
     }
 
     // Verify JWT signature
-    const { payload } = await jwtVerify(token, REFRESH_SECRET, {
+    const { payload } = await jwtVerify(token, getRefreshSecret(), {
       issuer: 'faonsist',
     });
 

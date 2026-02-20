@@ -190,8 +190,10 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
           socket.data.userId = payload.userId;
           socket.data.userName = payload.name;
           socket.data.userRole = payload.role;
+          console.log(`[Socket] Auth OK: ${payload.name} (${payload.userId})`);
         } else {
-          // Token var ama geçersiz — guest olarak devam et
+          // Token var ama geçersiz — hatayı logla, guest olarak devam et
+          console.warn(`[Socket] Token geçersiz, guest olarak devam: token başlangıcı=${token.substring(0,20)}`);
           socket.data.userId = `guest_${socket.id}`;
           socket.data.userName = socket.handshake.auth?.userName || 'Misafir';
           socket.data.userRole = 'Izleyici';
