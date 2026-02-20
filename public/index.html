@@ -80,18 +80,152 @@
         .sidebar-collapsed .nav-item { justify-content:center; padding:10px; }
         .sidebar-collapsed .nav-item svg { margin:0; }
         .sidebar-collapsed .channel-btn { display:none; }
-        /* v5 - Light Theme */
-        html.light body { background:#f1f5f9; color:#1e293b; }
-        html.light .glass { background:rgba(255,255,255,0.7); border-color:rgba(148,163,184,0.2); }
-        html.light .glass-strong { background:rgba(255,255,255,0.85); border-color:rgba(148,163,184,0.25); }
-        html.light .msg-other { background:rgba(241,245,249,0.9); border-color:rgba(148,163,184,0.2); color:#1e293b; }
-        html.light .msg-item:hover { background:rgba(0,0,0,0.03); }
-        html.light .msg-item.msg-row-mine:hover { background:rgba(59,130,246,0.06); }
-        html.light .msg-mine-block { background:rgba(59,130,246,0.06); }
-        html.light .msg-date-sep span { background:rgba(241,245,249,0.9); border-color:rgba(148,163,184,0.3); color:#64748b; }
-        html.light .search-box { background:rgba(241,245,249,0.8); color:#1e293b; border-color:rgba(148,163,184,0.3); }
-        html.light input, html.light select, html.light textarea { color:#1e293b; }
-        html.light .notification { background:#fff; border-color:#3b82f6; color:#1e293b; }
+        /* ============================================================
+           LIGHT THEME — Kapsamlı Override
+           Tüm koyu Tailwind bg/text sınıflarını açık renklerle ezer
+        ============================================================ */
+
+        /* CSS Değişkenleri */
+        html.light {
+            --bg-primary:   #f1f5f9;
+            --bg-secondary: #e2e8f0;
+            --bg-card:      #ffffff;
+            --bg-hover:     rgba(0,0,0,0.04);
+            --text-primary: #0f172a;
+            --text-second:  #475569;
+            --text-muted:   #94a3b8;
+            --border:       rgba(148,163,184,0.35);
+            --border-strong:rgba(148,163,184,0.55);
+        }
+
+        /* Temel */
+        html.light body { background:#f1f5f9; color:#0f172a; }
+
+        /* Cam efektleri */
+        html.light .glass        { background:rgba(255,255,255,0.82) !important; border-color:rgba(148,163,184,0.3) !important; }
+        html.light .glass-strong { background:rgba(255,255,255,0.95) !important; border-color:rgba(148,163,184,0.4) !important; }
+
+        /* ---- Sidebar ---- */
+        html.light #sidebar { background:#ffffff !important; border-right:1px solid #e2e8f0 !important; }
+        html.light #sidebar .nav-item { color:#475569 !important; }
+        html.light #sidebar .nav-item:hover,
+        html.light #sidebar .nav-item.active { background:rgba(59,130,246,0.08) !important; color:#1d4ed8 !important; }
+        html.light #sidebar .text-gray-400,
+        html.light #sidebar .text-gray-500 { color:#64748b !important; }
+        html.light #sidebar .text-gray-300 { color:#475569 !important; }
+        html.light #sidebar .text-white { color:#0f172a !important; }
+        html.light #sidebar .bg-gray-800\/50,
+        html.light #sidebar .bg-gray-800\/30,
+        html.light #sidebar [class*="bg-gray-8"],
+        html.light #sidebar [class*="bg-gray-9"] { background:rgba(241,245,249,0.8) !important; }
+        html.light #sidebar .border-gray-700,
+        html.light #sidebar [class*="border-gray-7"],
+        html.light #sidebar [class*="border-gray-8"] { border-color:#e2e8f0 !important; }
+
+        /* ---- Header / Topbar ---- */
+        html.light header { background:rgba(255,255,255,0.92) !important; border-bottom:1px solid #e2e8f0 !important; }
+        html.light header .text-gray-400 { color:#64748b !important; }
+        html.light header .text-gray-300 { color:#475569 !important; }
+        html.light header .text-white    { color:#0f172a !important; }
+        html.light header [class*="bg-gray-8"],
+        html.light header [class*="bg-gray-9"],
+        html.light header [class*="bg-gray-7"] { background:#f8fafc !important; }
+        html.light header [class*="hover:bg-gray-7"]:hover,
+        html.light header [class*="hover:bg-gray-8"]:hover { background:#e2e8f0 !important; }
+
+        /* ---- Genel Tailwind bg/text override ---- */
+        html.light [class*="bg-gray-900"]  { background:#f8fafc !important; }
+        html.light [class*="bg-gray-800"]  { background:#f1f5f9 !important; }
+        html.light [class*="bg-gray-700"]  { background:#e2e8f0 !important; }
+        html.light [class*="bg-gray-700\/30"] { background:rgba(226,232,240,0.5) !important; }
+        html.light [class*="bg-gray-800\/50"] { background:rgba(248,250,252,0.8) !important; }
+        html.light [class*="bg-gray-800\/80"] { background:rgba(255,255,255,0.9) !important; }
+        html.light [class*="bg-gray-800\/60"] { background:rgba(248,250,252,0.85) !important; }
+
+        html.light .text-white   { color:#0f172a !important; }
+        html.light .text-gray-100 { color:#1e293b !important; }
+        html.light .text-gray-200 { color:#334155 !important; }
+        html.light .text-gray-300 { color:#475569 !important; }
+        html.light .text-gray-400 { color:#64748b !important; }
+        html.light .text-gray-500 { color:#94a3b8 !important; }
+
+        html.light [class*="border-gray-700"] { border-color:#e2e8f0 !important; }
+        html.light [class*="border-gray-600"] { border-color:#cbd5e1 !important; }
+        html.light [class*="border-gray-800"] { border-color:#e2e8f0 !important; }
+
+        /* ---- Input / Form elemanları ---- */
+        html.light input,
+        html.light select,
+        html.light textarea {
+            background:#ffffff !important;
+            color:#0f172a !important;
+            border-color:#cbd5e1 !important;
+        }
+        html.light input::placeholder,
+        html.light textarea::placeholder { color:#94a3b8 !important; }
+        html.light input:focus,
+        html.light select:focus,
+        html.light textarea:focus { border-color:#3b82f6 !important; box-shadow:0 0 0 2px rgba(59,130,246,0.15) !important; }
+
+        /* ---- Modal / Kart ---- */
+        html.light .modal > div,
+        html.light [id^="modal-"] > div { background:#ffffff !important; color:#0f172a !important; border:1px solid #e2e8f0 !important; box-shadow:0 20px 60px rgba(0,0,0,0.12) !important; }
+
+        /* ---- Mesajlaşma ---- */
+        html.light #messages-container  { background:#f8fafc !important; }
+        html.light .msg-other           { background:#ffffff !important; border-color:#e2e8f0 !important; color:#0f172a !important; }
+        html.light .msg-other-block     { background:#ffffff !important; color:#0f172a !important; }
+        html.light .msg-mine-block      { background:rgba(59,130,246,0.1) !important; color:#0f172a !important; }
+        html.light .msg-item:hover      { background:rgba(0,0,0,0.025) !important; }
+        html.light .msg-item.msg-row-mine:hover { background:rgba(59,130,246,0.06) !important; }
+        html.light .msg-date-sep span   { background:#f1f5f9 !important; border-color:#cbd5e1 !important; color:#64748b !important; }
+        html.light .msg-sender          { color:#1d4ed8 !important; }
+        html.light .msg-time            { color:#94a3b8 !important; }
+        html.light .msg-text            { color:#0f172a !important; }
+        html.light #typing-indicator    { color:#64748b !important; }
+
+        /* ---- Kanal Listesi ---- */
+        html.light #channel-list [class*="text-blue-4"] { color:#2563eb !important; }
+        html.light #channel-list [class*="bg-blue-5"]   { background:rgba(59,130,246,0.12) !important; }
+        html.light #channel-list [class*="text-gray-4"] { color:#64748b !important; }
+        html.light #channel-list [class*="hover:bg-gray-8"]:hover { background:rgba(226,232,240,0.6) !important; }
+
+        /* ---- Arama kutusu ---- */
+        html.light .search-box { background:#ffffff !important; color:#0f172a !important; border-color:#cbd5e1 !important; }
+        html.light #global-search-input { background:#ffffff !important; color:#0f172a !important; }
+
+        /* ---- Bildirimler ---- */
+        html.light .notification { background:#ffffff !important; border-color:#3b82f6 !important; color:#0f172a !important; box-shadow:0 8px 30px rgba(0,0,0,0.12) !important; }
+        html.light .notif-panel  { background:#ffffff !important; border:1px solid #e2e8f0 !important; }
+        html.light .notif-item:hover { background:rgba(0,0,0,0.03) !important; }
+        html.light .notif-unread { background:rgba(59,130,246,0.05) !important; }
+
+        /* ---- Tooltip & Dropdown ---- */
+        html.light [class*="bg-gray-900"].rounded,
+        html.light [class*="bg-gray-900"].rounded-lg,
+        html.light [class*="bg-gray-900"].rounded-xl { background:#ffffff !important; border:1px solid #e2e8f0 !important; box-shadow:0 8px 24px rgba(0,0,0,0.1) !important; }
+
+        /* ---- Butonlar ---- */
+        html.light button[class*="bg-gray-700"] { background:#e2e8f0 !important; color:#374151 !important; }
+        html.light button[class*="bg-gray-700"]:hover { background:#cbd5e1 !important; }
+        html.light button[class*="bg-gray-800"] { background:#f1f5f9 !important; color:#374151 !important; }
+        html.light button[class*="hover:bg-gray-7"]:hover { background:#e2e8f0 !important; }
+        html.light button[class*="hover:bg-gray-6"]:hover { background:#cbd5e1 !important; }
+
+        /* ---- Tablo ---- */
+        html.light table { color:#0f172a !important; }
+        html.light th { background:#f1f5f9 !important; color:#475569 !important; border-bottom:1px solid #e2e8f0 !important; }
+        html.light td { border-bottom:1px solid #f1f5f9 !important; color:#0f172a !important; }
+        html.light tr:hover td { background:rgba(241,245,249,0.8) !important; }
+
+        /* ---- Badge / Chip ---- */
+        html.light [class*="bg-gray-700\/"] { background:rgba(226,232,240,0.7) !important; }
+        html.light [class*="bg-white\/1"]   { background:rgba(255,255,255,0.9) !important; }
+
+        /* ---- Scrollbar (light) ---- */
+        html.light ::-webkit-scrollbar-track { background:#f1f5f9; }
+        html.light ::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+        html.light ::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
         /* v5 - Notification Panel */
         .notif-panel { display:none; position:fixed; top:56px; right:16px; width:380px; max-height:520px; z-index:9999; }
         .notif-panel.active { display:block; }
