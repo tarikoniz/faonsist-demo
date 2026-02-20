@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(purchaseRequest, 'Satin alma talebi basariyla olusturuldu');
+    return successResponse(purchaseRequest, 'Satin alma talebi başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating purchase request:', error);
     return Response.json(

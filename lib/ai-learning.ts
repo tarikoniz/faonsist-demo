@@ -39,7 +39,7 @@ const INTENT_PATTERNS: Record<string, string[]> = {
   satis:    ['satis', 'musteri', 'pipeline', 'firsat', 'taksit', 'crm', 'gelir'],
   depo:     ['depo', 'envanter', 'stok', 'malzeme', 'zimmet', 'sayim', 'urun'],
   arac:     ['arac', 'filo', 'plaka', 'bakim', 'yakit', 'kamyon', 'binek', 'muayene'],
-  ekip:     ['personel', 'kullanici', 'ekip', 'rol', 'yetki', 'departman'],
+  ekip:     ['personel', 'kullanıcı', 'ekip', 'rol', 'yetki', 'departman'],
   toplanti: ['toplanti', 'meeting', 'ajanda', 'katilimci', 'gorusme'],
   genel:    ['sistem', 'analiz', 'rapor', 'ozet', 'durum', 'genel', 'yardim'],
 };

@@ -49,10 +49,10 @@ export async function POST(request: NextRequest) {
     // Güvenlik: Kullanıcı bulunsun ya da bulunmasın aynı yanıt
     return successResponse(
       { sent: true },
-      'Eger bu e-posta kayitliysa, sifre sifirlama talimatlariniz gonderilecektir.'
+      'Eger bu e-posta kayıtlıysa, şifre sıfırlama talimatlariniz gönderilecektir.'
     );
   } catch (error) {
     console.error('Forgot password error:', error);
-    return errorResponse('Sifre sifirlama talebi islenirken bir hata olustu');
+    return errorResponse('Şifre sıfırlama talebi işlenirken bir hata oluştu');
   }
 }

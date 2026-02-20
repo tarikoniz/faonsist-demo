@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(vehicle, 'Arac basariyla olusturuldu');
+    return successResponse(vehicle, 'Arac başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating vehicle:', error);
     return Response.json(

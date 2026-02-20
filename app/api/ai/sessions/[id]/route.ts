@@ -85,9 +85,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     return successResponse({ id: updated.id, baslik: updated.baslik });
   } catch (error) {
-    console.error('AI session guncelleme hatasi:', error);
+    console.error('AI session güncelleme hatasi:', error);
     return Response.json(
-      { success: false, error: { code: 'SERVER_ERROR', message: 'Oturum guncellenemedi' } },
+      { success: false, error: { code: 'SERVER_ERROR', message: 'Oturum güncellenemedi' } },
       { status: 500 }
     );
   }

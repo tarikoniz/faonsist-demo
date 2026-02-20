@@ -99,7 +99,7 @@ export async function PUT(
       },
     });
 
-    return successResponse(channel, 'Kanal basariyla guncellendi');
+    return successResponse(channel, 'Kanal başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating channel:', error);
     return Response.json(
@@ -127,7 +127,7 @@ export async function DELETE(
 
     await prisma.channel.delete({ where: { id } });
 
-    return successResponse(null, 'Kanal basariyla silindi');
+    return successResponse(null, 'Kanal başarıyla silindi');
   } catch (error) {
     console.error('Error deleting channel:', error);
     return Response.json(

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!body.userId) {
-      return badRequestResponse('Hedef kullanici ID (userId) zorunludur');
+      return badRequestResponse('Hedef kullanıcı ID (userId) zorunludur');
     }
 
     const notification = await prisma.notification.create({
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(notification, 'Bildirim basariyla olusturuldu');
+    return successResponse(notification, 'Bildirim başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating notification:', error);
     return Response.json(

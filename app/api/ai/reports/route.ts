@@ -1,6 +1,6 @@
 // ============================================
 // FaOnSisT - AI Reports API
-// POST: AI raporu olustur, GET: Raporlari listele
+// POST: AI raporu oluştur, GET: Raporlari listele
 // ============================================
 
 import { NextRequest } from 'next/server';
@@ -10,7 +10,7 @@ import { generateAiReport } from '@/lib/ai/report-service';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/ai/reports — Kullanicinin AI raporlarini listele
+// GET /api/ai/reports — Kullanıcınin AI raporlarini listele
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/ai/reports — AI raporu olustur
+// POST /api/ai/reports — AI raporu oluştur
 export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     const validTypes = ['proje_ozet', 'maliyet_analiz', 'nakit_akis', 'performans', 'risk'];
     if (!tur || !validTypes.includes(tur)) {
-      return badRequestResponse(`Gecersiz rapor turu. Gecerli turler: ${validTypes.join(', ')}`);
+      return badRequestResponse(`Geçersiz rapor turu. Gecerli turler: ${validTypes.join(', ')}`);
     }
 
     const reportId = await generateAiReport({
@@ -74,12 +74,12 @@ export async function POST(request: NextRequest) {
 
     return successResponse({
       reportId,
-      message: 'Rapor olusturuluyor. Hazir oldugunda bildirim alacaksiniz.',
+      message: 'Rapor oluşturuluyor. Hazir oldugunda bildirim alacaksiniz.',
     });
   } catch (error) {
     console.error('AI report create hatasi:', error);
     return Response.json(
-      { success: false, error: { code: 'SERVER_ERROR', message: 'Rapor olusturulamadi' } },
+      { success: false, error: { code: 'SERVER_ERROR', message: 'Rapor oluşturulamadi' } },
       { status: 500 }
     );
   }

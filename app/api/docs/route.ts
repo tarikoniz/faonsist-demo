@@ -33,13 +33,13 @@ const API_DOCS = {
   endpoints: {
     auth: {
       'POST /api/auth/login': {
-        description: 'Kullanici girisi',
+        description: 'Kullanıcı girisi',
         public: true,
         body: { email: 'string', password: 'string' },
         response: { token: 'string', refreshToken: 'string', user: 'object' },
       },
       'POST /api/auth/register': {
-        description: 'Yeni kullanici kaydi',
+        description: 'Yeni kullanıcı kaydi',
         public: true,
         body: { name: 'string', email: 'string', password: 'string' },
       },
@@ -47,19 +47,19 @@ const API_DOCS = {
         description: 'Token yenileme (rotation destekli)',
         public: true,
         body: { refreshToken: 'string' },
-        notes: 'Her kullanim sonrasi eski token iptal edilir, yeni token cift olusturulur',
+        notes: 'Her kullanim sonrasi eski token iptal edilir, yeni token cift oluşturulur',
       },
       'POST /api/auth/forgot-password': {
-        description: 'Sifre sifirlama talebi',
+        description: 'Şifre sıfırlama talebi',
         public: true,
         body: { email: 'string' },
-        notes: 'Guvenlik: Kullanici bulunsun ya da bulunmasin ayni yanit doner',
+        notes: 'Guvenlik: Kullanıcı bulunsun ya da bulunmasin ayni yanit doner',
       },
       'POST /api/auth/reset-password': {
-        description: 'Sifre sifirlama',
+        description: 'Şifre sıfırlama',
         public: true,
         body: { token: 'string', newPassword: 'string (min 4 karakter)' },
-        notes: 'Basarili olursa tum refresh tokenlar iptal edilir',
+        notes: 'Başarılı olursa tum refresh tokenlar iptal edilir',
       },
     },
     projects: {
@@ -69,13 +69,13 @@ const API_DOCS = {
         query: 'page, limit, search, durum, include=all',
         response: '{ data: [], pagination: { page, limit, total, totalPages, hasNext, hasPrev } }',
       },
-      'POST /api/projects': { description: 'Yeni proje olustur', roles: ['admin', 'manager'] },
+      'POST /api/projects': { description: 'Yeni proje oluştur', roles: ['admin', 'manager'] },
       'GET /api/projects/:id': { description: 'Proje detayi', roles: ['*'] },
-      'PUT /api/projects/:id': { description: 'Proje guncelle', roles: ['admin', 'manager', 'project_manager'] },
+      'PUT /api/projects/:id': { description: 'Proje güncelle', roles: ['admin', 'manager', 'project_manager'] },
     },
     tenders: {
       'GET /api/tenders': { description: 'Tum ihaleleri listele (paginasyonlu)', roles: ['*'], query: 'page, limit, search, status' },
-      'POST /api/tenders': { description: 'Yeni ihale olustur', roles: ['admin', 'manager'] },
+      'POST /api/tenders': { description: 'Yeni ihale oluştur', roles: ['admin', 'manager'] },
       'GET /api/tenders/:id': { description: 'Ihale detayi', roles: ['*'] },
     },
     sales: {
@@ -84,7 +84,7 @@ const API_DOCS = {
     },
     channels: {
       'GET /api/channels': { description: 'Iletisim kanallari', roles: ['*'] },
-      'POST /api/channels': { description: 'Yeni kanal olustur', roles: ['*'] },
+      'POST /api/channels': { description: 'Yeni kanal oluştur', roles: ['*'] },
       'GET /api/channels/:id/messages': { description: 'Kanal mesajlari', roles: ['*'] },
       'POST /api/channels/:id/messages': { description: 'Mesaj gonder', roles: ['*'] },
     },
@@ -106,7 +106,7 @@ const API_DOCS = {
   errorCodes: {
     UNAUTHORIZED: '401 — Kimlik dogrulama hatasi',
     FORBIDDEN: '403 — Yetki yetersiz',
-    BAD_REQUEST: '400 — Gecersiz istek',
+    BAD_REQUEST: '400 — Geçersiz istek',
     NOT_FOUND: '404 — Kayit bulunamadi',
     RATE_LIMITED: '429 — Istek limiti asildi',
     SERVER_ERROR: '500 — Sunucu hatasi',

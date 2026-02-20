@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const user = await getUserFromRequest(request);
     if (!user) return unauthorizedResponse();
     if (user.role !== 'admin') {
-      return forbiddenResponse('Sadece admin kullanicilar veri aktarimi yapabilir');
+      return forbiddenResponse('Sadece admin kullanıcılar veri aktarimi yapabilir');
     }
 
     const body = await request.json();
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
           const newUser = await tx.user.create({
             data: {
-              name: u.name || 'Kullanici',
+              name: u.name || 'Kullanıcı',
               phone: u.phone || null,
               email: u.email || `user_${Date.now()}@faonsist.com`,
               password: u.password ? await hashPassword(u.password) : await hashPassword('1234'),
@@ -592,7 +592,7 @@ export async function POST(request: NextRequest) {
               legacyId: typeof o.id === 'number' ? o.id : null,
               siparisNo: o.siparisNo, tedarikci: o.tedarikci || '',
               kalemler: o.kalemler || null, toplamTutar: o.toplamTutar || 0,
-              durum: o.durum || 'olusturuldu', siparisTarihi: o.siparisTarihi,
+              durum: o.durum || 'oluşturuldu', siparisTarihi: o.siparisTarihi,
               beklenenTarih: o.beklenenTarih, odemeDurumu: o.odemeDurumu || 'odenmedi',
               notlar: o.notlar, ihaleId: o.ihaleId,
             },
@@ -931,7 +931,7 @@ export async function POST(request: NextRequest) {
 
     return successResponse(
       { mapping, stats },
-      `Veri aktarimi basariyla tamamlandi: ${stats.projects} proje, ${stats.tenders} ihale, ${stats.sales} satis, ${stats.channels} kanal, ${stats.files} dosya`
+      `Veri aktarimi başarıyla tamamlandi: ${stats.projects} proje, ${stats.tenders} ihale, ${stats.sales} satis, ${stats.channels} kanal, ${stats.files} dosya`
     );
   } catch (error) {
     console.error('Migration import error:', error);

@@ -8,6 +8,70 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { verifyAccessToken, TokenPayload } from './auth';
 import { prisma } from './prisma';
+import webpush from 'web-push';
+
+// ---- Web Push Setup ----
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT || 'mailto:admin@faonsist.com',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
+async function sendPushToChannelMembers(
+  channelId: string,
+  senderUserId: string | null,
+  title: string,
+  body: string
+): Promise<void> {
+  try {
+    // Kanalın tüm üyelerini bul
+    const channel = await prisma.channel.findFirst({
+      where: { OR: [{ legacyId: channelId }, { id: channelId }] },
+      select: { id: true },
+    });
+    if (!channel) return;
+
+    const members = await prisma.channelMember.findMany({
+      where: { channelId: channel.id },
+      select: { userId: true },
+    });
+
+    // Göndericinin kendisine push gönderme
+    const targetUserIds = members
+      .map(m => m.userId)
+      .filter(uid => uid !== senderUserId);
+
+    if (targetUserIds.length === 0) return;
+
+    // Her kullanıcının push subscriptionlarını al
+    const subscriptions = await prisma.pushSubscription.findMany({
+      where: { userId: { in: targetUserIds } },
+    });
+
+    const payload = JSON.stringify({ title, body, tag: `chat-${channelId}`, url: '/app' });
+
+    // Push gönder (hataları sessizce geç)
+    await Promise.allSettled(
+      subscriptions.map(sub =>
+        webpush
+          .sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            payload
+          )
+          .catch(err => {
+            // 410 Gone = geçersiz subscription — sil
+            if (err.statusCode === 410) {
+              prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+            }
+          })
+      )
+    );
+  } catch (err) {
+    console.error('[Push] Send error:', err);
+  }
+}
 
 // ---- Type Definitions ----
 
@@ -254,7 +318,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
       return (...args: unknown[]) => {
         if (!checkSocketRateLimit(userId)) {
           socket.emit('error:rate-limited', {
-            message: 'Cok fazla istek gonderiyorsunuz. Lutfen yavaslayin.',
+            message: 'Çok fazla istek gönderiyorsunuz. Lütfen yavaşlayın.',
           });
           return;
         }
@@ -272,7 +336,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
         const isMember = await isChannelMember(channelId, userId);
         if (!isMember) {
           socket.emit('error:forbidden', {
-            message: 'Bu kanala erisim yetkiniz yok.',
+            message: 'Bu kanala erişim yetkiniz yok.',
             channelId,
           });
           return;
@@ -297,7 +361,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
         // Kanal üyelik kontrolü
         const isMember = await isChannelMember(channelId, userId);
         if (!isMember) {
-          socket.emit('error:forbidden', { message: 'Bu kanala mesaj gonderemezsiniz.' });
+          socket.emit('error:forbidden', { message: 'Bu kanala mesaj gönderemezsiniz.' });
           return;
         }
 
@@ -355,6 +419,11 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
           if (channel.id !== channelIdStr) {
             io!.to(`channel:${channelIdStr}`).emit('message:new', msg);
           }
+
+          // Web Push — sekme kapalı/başka kanalda olan üyelere bildirim gönder
+          const pushTitle = `${userName}`;
+          const pushBody = trimmedText.length > 100 ? trimmedText.substring(0, 100) + '…' : trimmedText;
+          sendPushToChannelMembers(channelIdStr, realUserId, pushTitle, pushBody).catch(() => {});
         } catch (error) {
           console.error('[Socket] Message persist error:', error);
           socket.emit('error:server', { message: 'Mesaj kaydedilemedi.' });
@@ -372,7 +441,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
           // Sadece kendi mesajını güncelleyebilir
           const existing = await prisma.message.findUnique({ where: { id: messageId } });
           if (!existing || existing.userId !== userId) {
-            socket.emit('error:forbidden', { message: 'Bu mesaji duzenleyemezsiniz.' });
+            socket.emit('error:forbidden', { message: 'Bu mesajı düzenleyemezsiniz.' });
             return;
           }
 
@@ -405,7 +474,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
           if (!existing) return;
 
           if (existing.userId !== userId && socket.data.userRole !== 'admin') {
-            socket.emit('error:forbidden', { message: 'Bu mesaji silemezsiniz.' });
+            socket.emit('error:forbidden', { message: 'Bu mesajı silemezsiniz.' });
             return;
           }
 
@@ -437,7 +506,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
       if (!data.channelId) return;
       socket
         .to(`channel:${data.channelId}`)
-        .emit('user:stopped-typing', { userId, channelId: data.channelId });
+        .emit('user:stopped-typing', { userId, name: userName, channelId: data.channelId });
     });
 
     // ---- Read Receipts (with DB persistence) ----
@@ -574,6 +643,35 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
       })
     );
 
+    // ---- Channel Created (tüm bağlı kullanıcılara yayınla) ----
+    socket.on(
+      'channel:created',
+      withRateLimit((data: unknown) => {
+        const { channelId, name, createdBy, uuid } = data as {
+          channelId: string;
+          name: string;
+          createdBy: string;
+          uuid?: string;
+        };
+        if (!channelId || !name) return;
+
+        // Kanalı oluşturan dışındaki tüm bağlı kullanıcılara bildir
+        socket.broadcast.emit('channel:new', {
+          channelId,
+          name,
+          createdBy,
+          uuid: uuid || null,
+          createdAt: new Date().toISOString(),
+        });
+
+        // Cache'i temizle (yeni kanal için üyelik cache stale olabilir)
+        if (uuid) invalidateChannelCache(uuid);
+        invalidateChannelCache(channelId);
+
+        console.log(`[Socket] Yeni kanal oluşturuldu: #${name} (${userId})`);
+      })
+    );
+
     // ---- Disconnect ----
     socket.on('disconnect', () => {
       console.log(`[Socket] Disconnected: ${userName}`);
@@ -596,7 +694,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
   return io;
 }
 
-// ---- Helper: Belirli bir kullaniciya event gonder ----
+// ---- Helper: Belirli bir kullanıcıya event gönder ----
 export function emitToUser(userId: string, event: string, data: unknown): void {
   if (!io) return;
   const presence = onlineUsers.get(userId);

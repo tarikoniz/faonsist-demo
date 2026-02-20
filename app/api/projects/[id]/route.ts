@@ -48,7 +48,7 @@ export async function GET(
     return successResponse(project);
   } catch (error) {
     console.error('Error fetching project:', error);
-    return errorResponse('Proje getirilirken bir hata olustu');
+    return errorResponse('Proje getirilirken bir hata oluştu');
   }
 }
 
@@ -90,11 +90,11 @@ export async function PUT(
       },
     });
 
-    audit.update(user.id, 'project', id, `Proje guncellendi: ${project.ad}`);
-    return successResponse(project, 'Proje basariyla guncellendi');
+    audit.update(user.id, 'project', id, `Proje güncellendi: ${project.ad}`);
+    return successResponse(project, 'Proje başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating project:', error);
-    return errorResponse('Proje guncellenirken bir hata olustu');
+    return errorResponse('Proje güncellenirken bir hata oluştu');
   }
 }
 
@@ -121,9 +121,9 @@ export async function DELETE(
     });
 
     audit.delete(user.id, 'project', id, `Proje silindi: ${existing.ad}`);
-    return successResponse(null, 'Proje basariyla silindi');
+    return successResponse(null, 'Proje başarıyla silindi');
   } catch (error) {
     console.error('Error deleting project:', error);
-    return errorResponse('Proje silinirken bir hata olustu');
+    return errorResponse('Proje silinirken bir hata oluştu');
   }
 }

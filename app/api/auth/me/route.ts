@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     return Response.json(
       {
         success: false,
-        error: { code: 'SERVER_ERROR', message: 'Sunucu hatasi olustu' },
+        error: { code: 'SERVER_ERROR', message: 'Sunucu hatasi oluştu' },
       },
       { status: 500 }
     );

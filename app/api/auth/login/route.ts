@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!email || !password) {
-      return badRequestResponse('E-posta ve sifre gerekli');
+      return badRequestResponse('E-posta ve şifre gerekli');
     }
 
     // Find user by email
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return unauthorizedResponse('Gecersiz e-posta veya sifre');
+      return unauthorizedResponse('Geçersiz e-posta veya şifre');
     }
 
     if (!user.active) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // Verify password
     const isValid = await verifyPassword(password, user.password);
     if (!isValid) {
-      return unauthorizedResponse('Gecersiz e-posta veya sifre');
+      return unauthorizedResponse('Geçersiz e-posta veya şifre');
     }
 
     // Generate tokens
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Audit log
-    audit.login(user.id, `${user.email} giris yapti`);
+    audit.login(user.id, `${user.email} giriş yaptı`);
 
     return successResponse(
       {
@@ -79,14 +79,14 @@ export async function POST(request: NextRequest) {
         refreshToken,
         expiresIn: 86400, // 24h in seconds
       },
-      'Giris basarili'
+      'Giris başarılı'
     );
   } catch (error) {
     console.error('Login error:', error);
     return Response.json(
       {
         success: false,
-        error: { code: 'SERVER_ERROR', message: 'Giris islemi sirasinda bir hata olustu' },
+        error: { code: 'SERVER_ERROR', message: 'Giris islemi sirasinda bir hata oluştu' },
       },
       { status: 500 }
     );

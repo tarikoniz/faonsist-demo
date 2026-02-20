@@ -45,7 +45,7 @@ async function checkTaskDeadlines(): Promise<void> {
 
   for (const task of urgentTasks) {
     if (task.atananKisi) {
-      // atananKisi bir kullanici adi, kullanici ID'sini bulmamiz lazim
+      // atananKisi bir kullanıcı adi, kullanıcı ID'sini bulmamiz lazim
       const users = await prisma.user.findMany({
         where: { name: { contains: task.atananKisi } },
         select: { id: true },
@@ -136,7 +136,7 @@ async function checkVehicleDocuments(): Promise<void> {
     }
   }
 
-  logger.info(`Deadline: ${expiringDocs.length} suresi dolan arac belgesi`, { module: 'deadline' });
+  logger.info(`Deadline: ${expiringDocs.length} süresi dolan arac belgesi`, { module: 'deadline' });
 }
 
 // Sozlesme bitis tarihleri
@@ -180,5 +180,5 @@ async function checkContractDeadlines(): Promise<void> {
     }
   }
 
-  logger.info(`Deadline: ${expiringContracts.length} suresi dolan sozlesme`, { module: 'deadline' });
+  logger.info(`Deadline: ${expiringContracts.length} süresi dolan sozlesme`, { module: 'deadline' });
 }

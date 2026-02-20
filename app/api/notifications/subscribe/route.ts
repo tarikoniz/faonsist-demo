@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
     const { subscription } = body;
 
     if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
-      return badRequestResponse('Gecersiz push subscription');
+      return badRequestResponse('Geçersiz push subscription');
     }
 
-    // Upsert: ayni endpoint varsa guncelle, yoksa olustur
+    // Upsert: ayni endpoint varsa güncelle, yoksa oluştur
     await prisma.pushSubscription.upsert({
       where: {
         userId_endpoint: {

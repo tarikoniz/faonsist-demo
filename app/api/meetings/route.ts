@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       include: { createdBy: { select: { id: true, name: true, avatar: true } } },
     });
 
-    return successResponse(meeting, 'Toplanti olusturuldu');
+    return successResponse(meeting, 'Toplanti oluşturuldu');
   } catch (error: any) {
     return errorResponse(error.message || 'Sunucu hatasi', 500);
   }

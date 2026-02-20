@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(warehouse, 'Depo basariyla olusturuldu');
+    return successResponse(warehouse, 'Depo başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating warehouse:', error);
     return Response.json(

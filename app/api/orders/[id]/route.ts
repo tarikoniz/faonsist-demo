@@ -79,7 +79,7 @@ export async function PUT(
       },
     });
 
-    return successResponse(order, 'Siparis basariyla guncellendi');
+    return successResponse(order, 'Siparis başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating order:', error);
     return Response.json(
@@ -107,7 +107,7 @@ export async function DELETE(
 
     await prisma.order.delete({ where: { id } });
 
-    return successResponse(null, 'Siparis basariyla silindi');
+    return successResponse(null, 'Siparis başarıyla silindi');
   } catch (error) {
     console.error('Error deleting order:', error);
     return Response.json(

@@ -259,7 +259,7 @@ export function unauthorizedResponse(message = 'Yetkisiz erisim') {
   );
 }
 
-export function forbiddenResponse(message = 'Bu islem icin yetkiniz yok') {
+export function forbiddenResponse(message = 'Bu işlem için yetkiniz yok') {
   return Response.json(
     { success: false, error: { code: 'FORBIDDEN', message } },
     { status: 403 }

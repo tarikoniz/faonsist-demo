@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(sales, total, pagination);
   } catch (error) {
     console.error('Error fetching sales:', error);
-    return errorResponse('Satislar alinirken bir hata olustu');
+    return errorResponse('Satislar alinirken bir hata oluştu');
   }
 }
 
@@ -75,10 +75,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    audit.create(user.id, 'sale', sale.id, `Satis olusturuldu: ${sale.customer}`);
-    return successResponse(sale, 'Satis basariyla olusturuldu');
+    audit.create(user.id, 'sale', sale.id, `Satis oluşturuldu: ${sale.customer}`);
+    return successResponse(sale, 'Satis başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating sale:', error);
-    return errorResponse('Satis olusturulurken bir hata olustu');
+    return errorResponse('Satis oluşturulurken bir hata oluştu');
   }
 }

@@ -76,7 +76,7 @@ export async function PUT(
       },
     });
 
-    return successResponse(warehouse, 'Depo basariyla guncellendi');
+    return successResponse(warehouse, 'Depo başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating warehouse:', error);
     return Response.json(
@@ -104,7 +104,7 @@ export async function DELETE(
 
     await prisma.warehouse.delete({ where: { id } });
 
-    return successResponse(null, 'Depo basariyla silindi');
+    return successResponse(null, 'Depo başarıyla silindi');
   } catch (error) {
     console.error('Error deleting warehouse:', error);
     return Response.json(

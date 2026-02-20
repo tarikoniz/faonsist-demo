@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       where: { id: body.warehouseId },
     });
     if (!warehouse) {
-      return badRequestResponse('Gecersiz depo ID');
+      return badRequestResponse('Geçersiz depo ID');
     }
 
     const item = await prisma.inventoryItem.create({
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(item, 'Envanter kalemi basariyla olusturuldu');
+    return successResponse(item, 'Envanter kalemi başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating inventory item:', error);
     return Response.json(

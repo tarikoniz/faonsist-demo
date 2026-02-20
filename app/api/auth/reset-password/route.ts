@@ -22,17 +22,17 @@ export async function POST(request: NextRequest) {
     const { token, newPassword } = body;
 
     if (!token) {
-      return badRequestResponse('Sifirlama tokeni zorunludur');
+      return badRequestResponse('Sıfırlama tokeni zorunludur');
     }
 
     if (!newPassword || newPassword.length < 4) {
-      return badRequestResponse('Yeni sifre en az 4 karakter olmalidir');
+      return badRequestResponse('Yeni şifre en az 4 karakter olmalıdır');
     }
 
     // Token doğrula
     const payload = await verifyPasswordResetToken(token);
     if (!payload) {
-      return unauthorizedResponse('Gecersiz veya suresi dolmus sifirlama tokeni');
+      return unauthorizedResponse('Geçersiz veya süresi dolmuş sıfırlama tokeni');
     }
 
     // Kullanıcı aktif mi?
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || !user.active) {
-      return unauthorizedResponse('Kullanici bulunamadi veya devre disi');
+      return unauthorizedResponse('Kullanıcı bulunamadi veya devre disi');
     }
 
     // Şifreyi güncelle
@@ -65,10 +65,10 @@ export async function POST(request: NextRequest) {
 
     return successResponse(
       { reset: true },
-      'Sifreniz basariyla guncellendi. Lutfen yeniden giris yapin.'
+      'Şifreniz başarıyla güncellendi. Lütfen yeniden giriş yapın.'
     );
   } catch (error) {
     console.error('Reset password error:', error);
-    return errorResponse('Sifre sifirlanirken bir hata olustu');
+    return errorResponse('Sifre sifirlanirken bir hata oluştu');
   }
 }

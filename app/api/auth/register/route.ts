@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // Validate input
     if (!name || !email || !password) {
-      return badRequestResponse('Ad, e-posta ve sifre gerekli');
+      return badRequestResponse('Ad, e-posta ve şifre gerekli');
     }
 
     if (password.length < 4) {
@@ -82,14 +82,14 @@ export async function POST(request: NextRequest) {
         refreshToken,
         expiresIn: 86400,
       },
-      'Kayit basarili'
+      'Kayit başarılı'
     );
   } catch (error) {
     console.error('Register error:', error);
     return Response.json(
       {
         success: false,
-        error: { code: 'SERVER_ERROR', message: 'Sunucu hatasi olustu' },
+        error: { code: 'SERVER_ERROR', message: 'Sunucu hatasi oluştu' },
       },
       { status: 500 }
     );

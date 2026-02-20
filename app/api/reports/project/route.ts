@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Project report hatasi:', error);
     return Response.json(
-      { success: false, error: { code: 'SERVER_ERROR', message: 'Rapor olusturulamadi' } },
+      { success: false, error: { code: 'SERVER_ERROR', message: 'Rapor oluşturulamadi' } },
       { status: 500 }
     );
   }

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       conversationHistory,
     });
 
-    // Session yoksa otomatik olustur
+    // Session yoksa otomatik oluştur
     if (!activeSessionId) {
       const session = await prisma.aiChatSession.create({
         data: {
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       },
     }).catch(() => { });
 
-    // Basarili AI yanitlarindan ogren
+    // Başarılı AI yanitlarindan ogren
     if (!result.usedFallback && result.model !== 'rate-limited') {
       learnFromResponse(
         message.trim(),

@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/ai/sessions — Kullanicinin AI sohbet oturumlarini listele
+// GET /api/ai/sessions — Kullanıcınin AI sohbet oturumlarini listele
 export async function GET(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/ai/sessions — Yeni sohbet oturumu olustur
+// POST /api/ai/sessions — Yeni sohbet oturumu oluştur
 export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);
@@ -86,9 +86,9 @@ export async function POST(request: NextRequest) {
 
     return successResponse({ id: session.id, baslik: session.baslik });
   } catch (error) {
-    console.error('AI session olusturma hatasi:', error);
+    console.error('AI session oluşturma hatasi:', error);
     return Response.json(
-      { success: false, error: { code: 'SERVER_ERROR', message: 'Oturum olusturulamadi' } },
+      { success: false, error: { code: 'SERVER_ERROR', message: 'Oturum oluşturulamadi' } },
       { status: 500 }
     );
   }

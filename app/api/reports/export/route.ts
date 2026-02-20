@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         filename = 'envanter.xlsx';
         break;
       default:
-        return badRequestResponse('Gecersiz entityType: projects, tenders, sales, inventory');
+        return badRequestResponse('Geçersiz entityType: projects, tenders, sales, inventory');
     }
 
     return new Response(new Uint8Array(buffer), {

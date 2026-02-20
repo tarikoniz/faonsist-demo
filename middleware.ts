@@ -145,7 +145,7 @@ export async function middleware(request: NextRequest) {
         return response;
       }
       return NextResponse.json(
-        { success: false, error: { code: 'UNAUTHORIZED', message: 'Gecersiz veya suresi dolmus token' } },
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Geçersiz veya süresi dolmuş token' } },
         { status: 401 }
       );
     }

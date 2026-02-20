@@ -105,7 +105,7 @@ export async function PUT(
       },
     });
 
-    return successResponse(purchaseRequest, 'Satin alma talebi basariyla guncellendi');
+    return successResponse(purchaseRequest, 'Satin alma talebi başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating purchase request:', error);
     return Response.json(
@@ -133,7 +133,7 @@ export async function DELETE(
 
     await prisma.purchaseRequest.delete({ where: { id } });
 
-    return successResponse(null, 'Satin alma talebi basariyla silindi');
+    return successResponse(null, 'Satin alma talebi başarıyla silindi');
   } catch (error) {
     console.error('Error deleting purchase request:', error);
     return Response.json(

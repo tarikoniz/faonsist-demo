@@ -74,7 +74,7 @@ async function generateReportAsync(reportId: string, req: AiReportRequest): Prom
       const { sendNotification } = await import('../notification-service');
       await sendNotification(req.userId, {
         baslik: 'AI Raporu Hazir',
-        mesaj: `"${getReportTitle(req.tur)}" raporu olusturuldu.`,
+        mesaj: `"${getReportTitle(req.tur)}" raporu oluşturuldu.`,
         tur: 'bilgi',
         kategori: 'rapor',
         entityType: 'ai_report',

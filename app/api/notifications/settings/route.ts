@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
 
     if (!settings || typeof settings !== 'object') {
       return Response.json(
-        { success: false, error: { code: 'BAD_REQUEST', message: 'Gecersiz ayarlar' } },
+        { success: false, error: { code: 'BAD_REQUEST', message: 'Geçersiz ayarlar' } },
         { status: 400 }
       );
     }
@@ -83,11 +83,11 @@ export async function PUT(request: NextRequest) {
       });
     }
 
-    return successResponse({ message: 'Ayarlar guncellendi', settings });
+    return successResponse({ message: 'Ayarlar güncellendi', settings });
   } catch (error) {
     console.error('Notification settings PUT hatasi:', error);
     return Response.json(
-      { success: false, error: { code: 'SERVER_ERROR', message: 'Ayarlar guncellenemedi' } },
+      { success: false, error: { code: 'SERVER_ERROR', message: 'Ayarlar güncellenemedi' } },
       { status: 500 }
     );
   }

@@ -96,7 +96,7 @@ export async function POST(
       },
     });
 
-    return successResponse(message, 'Mesaj basariyla gonderildi');
+    return successResponse(message, 'Mesaj başarıyla gonderildi');
   } catch (error) {
     console.error('Error sending message:', error);
     return Response.json(

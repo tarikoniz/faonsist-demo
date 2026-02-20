@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(supplier, 'Tedarikci basariyla olusturuldu');
+    return successResponse(supplier, 'Tedarikci başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating supplier:', error);
     return Response.json(

@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       include: { createdBy: { select: { id: true, name: true, avatar: true } } },
     });
 
-    return successResponse(meeting, 'Toplanti guncellendi');
+    return successResponse(meeting, 'Toplanti güncellendi');
   } catch (error: any) {
     return errorResponse(error.message || 'Sunucu hatasi', 500);
   }

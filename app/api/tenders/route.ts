@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(tenders, total, pagination);
   } catch (error) {
     console.error('Error fetching tenders:', error);
-    return errorResponse('Ihaleler alinirken bir hata olustu');
+    return errorResponse('Ihaleler alinirken bir hata oluştu');
   }
 }
 
@@ -86,10 +86,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    audit.create(user.id, 'tender', tender.id, `Ihale olusturuldu: ${tender.baslik || tender.item}`);
-    return successResponse(tender, 'Ihale basariyla olusturuldu');
+    audit.create(user.id, 'tender', tender.id, `Ihale oluşturuldu: ${tender.baslik || tender.item}`);
+    return successResponse(tender, 'Ihale başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating tender:', error);
-    return errorResponse('Ihale olusturulurken bir hata olustu');
+    return errorResponse('Ihale oluşturulurken bir hata oluştu');
   }
 }

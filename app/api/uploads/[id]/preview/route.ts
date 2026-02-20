@@ -99,7 +99,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   } catch (error) {
     console.error('File preview hatasi:', error);
     return Response.json(
-      { success: false, error: { code: 'SERVER_ERROR', message: 'Onizleme olusturulamadi' } },
+      { success: false, error: { code: 'SERVER_ERROR', message: 'Onizleme oluşturulamadi' } },
       { status: 500 }
     );
   }

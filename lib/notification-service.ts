@@ -109,7 +109,7 @@ async function sendPushNotification(userId: string, data: NotificationData): Pro
           payload
         );
       } catch (err: unknown) {
-        // Gecersiz subscription'i temizle
+        // Geçersiz subscription'i temizle
         if (err && typeof err === 'object' && 'statusCode' in err && (err as { statusCode: number }).statusCode === 410) {
           await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => { });
         }

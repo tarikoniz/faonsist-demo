@@ -92,7 +92,7 @@ export async function PUT(
       },
     });
 
-    return successResponse(vehicle, 'Arac basariyla guncellendi');
+    return successResponse(vehicle, 'Arac başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating vehicle:', error);
     return Response.json(
@@ -120,7 +120,7 @@ export async function DELETE(
 
     await prisma.vehicle.delete({ where: { id } });
 
-    return successResponse(null, 'Arac basariyla silindi');
+    return successResponse(null, 'Arac başarıyla silindi');
   } catch (error) {
     console.error('Error deleting vehicle:', error);
     return Response.json(

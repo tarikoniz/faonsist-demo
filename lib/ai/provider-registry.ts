@@ -53,7 +53,7 @@ export function getProvider(id: AiProviderId): AiProvider | undefined {
 export function isProviderHealthy(id: AiProviderId): boolean {
   const h = healthMap.get(id);
   if (!h) return false;
-  // Cooldown suresi dolmussa tekrar deneyelim
+  // Cooldown süresi dolmuşsa tekrar deneyelim
   if (h.cooldownUntil && Date.now() >= h.cooldownUntil) {
     h.cooldownUntil = undefined;
     h.available = true;

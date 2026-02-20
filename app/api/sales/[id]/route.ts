@@ -67,7 +67,7 @@ export async function PUT(
       },
     });
 
-    return successResponse(sale, 'Satis basariyla guncellendi');
+    return successResponse(sale, 'Satis başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating sale:', error);
     return Response.json(
@@ -95,7 +95,7 @@ export async function DELETE(
 
     await prisma.sale.delete({ where: { id } });
 
-    return successResponse(null, 'Satis basariyla silindi');
+    return successResponse(null, 'Satis başarıyla silindi');
   } catch (error) {
     console.error('Error deleting sale:', error);
     return Response.json(

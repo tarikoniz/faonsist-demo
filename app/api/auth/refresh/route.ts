@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Verify refresh token (rotation-aware — replay saldırı tespiti dahil)
     const payload = await verifyRefreshToken(refreshToken);
     if (!payload) {
-      return unauthorizedResponse('Gecersiz veya suresi dolmus refresh token');
+      return unauthorizedResponse('Geçersiz veya süresi dolmuş refresh token');
     }
 
     // Get user
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || !user.active) {
-      return unauthorizedResponse('Kullanici bulunamadi veya devre disi');
+      return unauthorizedResponse('Kullanıcı bulunamadi veya devre disi');
     }
 
     // Eski token'ı revoke et (rotation — silme yerine revoke)
@@ -60,6 +60,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Refresh error:', error);
-    return errorResponse('Token yenileme sirasinda bir hata olustu');
+    return errorResponse('Token yenileme sirasinda bir hata oluştu');
   }
 }

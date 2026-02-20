@@ -118,7 +118,7 @@ export async function DELETE(
       where: { id },
     });
 
-    return successResponse({ id }, 'Dosya basariyla silindi.');
+    return successResponse({ id }, 'Dosya başarıyla silindi.');
   } catch (error) {
     console.error('Error deleting file:', error);
     return Response.json(

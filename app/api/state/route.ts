@@ -1160,7 +1160,7 @@ export async function PUT(request: NextRequest) {
               legacyId: legacyId(o.id),
               siparisNo: str(o.siparisNo), tedarikci: strReq(o.tedarikci),
               kalemler: o.kalemler ?? null, toplamTutar: num(o.toplamTutar),
-              durum: strReq(o.durum, 'olusturuldu'), siparisTarihi: str(o.siparisTarihi),
+              durum: strReq(o.durum, 'oluşturuldu'), siparisTarihi: str(o.siparisTarihi),
               beklenenTarih: str(o.beklenenTarih), odemeDurumu: strReq(o.odemeDurumu, 'odenmedi'),
               notlar: str(o.notlar), ihaleId: str(o.ihaleId),
             },
@@ -1424,7 +1424,7 @@ export async function PUT(request: NextRequest) {
       }
     }, { timeout: 60000 }); // 60 second timeout for large data
 
-    return successResponse(null, 'Veriler basariyla kaydedildi');
+    return successResponse(null, 'Veriler başarıyla kaydedildi');
   } catch (error) {
     console.error('State PUT error:', error);
     return Response.json(

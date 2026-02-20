@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(projects, total, pagination);
   } catch (error) {
     console.error('Error fetching projects:', error);
-    return errorResponse('Projeler alinirken bir hata olustu');
+    return errorResponse('Projeler alinirken bir hata oluştu');
   }
 }
 
@@ -103,10 +103,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    audit.create(user.id, 'project', project.id, `Proje olusturuldu: ${project.ad}`);
-    return successResponse(project, 'Proje basariyla olusturuldu');
+    audit.create(user.id, 'project', project.id, `Proje oluşturuldu: ${project.ad}`);
+    return successResponse(project, 'Proje başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating project:', error);
-    return errorResponse('Proje olusturulurken bir hata olustu');
+    return errorResponse('Proje oluşturulurken bir hata oluştu');
   }
 }

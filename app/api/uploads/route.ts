@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     try {
       formData = await request.formData();
     } catch {
-      return badRequestResponse('Gecersiz form verisi. multipart/form-data bekleniyor.');
+      return badRequestResponse('Geçersiz form verisi. multipart/form-data bekleniyor.');
     }
 
     const fileEntry = formData.get('file');
@@ -136,12 +136,12 @@ export async function POST(request: NextRequest) {
         ...record,
         url: storage.getUrl(storagePath),
       },
-      'Dosya basariyla yuklendi.'
+      'Dosya başarıyla yuklendi.'
     );
   } catch (error) {
     console.error('Error uploading file:', error);
     return Response.json(
-      { success: false, error: { code: 'SERVER_ERROR', message: 'Dosya yuklenirken bir hata olustu' } },
+      { success: false, error: { code: 'SERVER_ERROR', message: 'Dosya yuklenirken bir hata oluştu' } },
       { status: 500 }
     );
   }

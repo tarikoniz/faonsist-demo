@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(channels, total, pagination);
   } catch (error) {
     console.error('Error fetching channels:', error);
-    return errorResponse('Kanallar alinirken bir hata olustu');
+    return errorResponse('Kanallar alinirken bir hata oluştu');
   }
 }
 
@@ -88,9 +88,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(channel, 'Kanal basariyla olusturuldu');
+    return successResponse(channel, 'Kanal başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating channel:', error);
-    return errorResponse('Kanal olusturulurken bir hata olustu');
+    return errorResponse('Kanal oluşturulurken bir hata oluştu');
   }
 }

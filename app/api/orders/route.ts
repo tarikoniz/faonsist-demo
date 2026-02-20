@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         tedarikci: body.tedarikci,
         kalemler: body.kalemler,
         toplamTutar: body.toplamTutar ?? 0,
-        durum: body.durum ?? 'olusturuldu',
+        durum: body.durum ?? 'oluşturuldu',
         siparisTarihi: body.siparisTarihi,
         beklenenTarih: body.beklenenTarih,
         odemeDurumu: body.odemeDurumu ?? 'odenmedi',
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return successResponse(order, 'Siparis basariyla olusturuldu');
+    return successResponse(order, 'Siparis başarıyla oluşturuldu');
   } catch (error) {
     console.error('Error creating order:', error);
     return Response.json(

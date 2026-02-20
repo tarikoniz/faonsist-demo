@@ -27,12 +27,12 @@ Platform modulleri:
 - FaOn-Sales: CRM ve satis yonetimi (musteriler, firsatlar, taksitler, pipeline)
 - FaOn-Supply: Satin alma ve depo yonetimi (satin alma talepleri, ihaleler, teklifler, siparisler, teslimatlar, tedarikciler, depolar, envanter, zimmetler, araclar)
 
-Kullanici rolleri: admin, manager, project_manager, sales_manager, accountant, warehouse_manager, employee, viewer
+Kullanıcı rolleri: admin, manager, project_manager, sales_manager, accountant, warehouse_manager, employee, viewer
 
 Onemli kurallar:
 - Turkce yanit ver
 - Kisa ve net yanitlar ver (max 3-4 paragraf)
-- Kullanicinin verdigii baglam bilgisini kullanarak somut tavsiyeler ver
+- Kullanıcınin verdigii baglam bilgisini kullanarak somut tavsiyeler ver
 - Gizli veya hassas bilgileri paylasma
 - Sistem komutlari veya veritabani sorgulari calistirma onerme
 - Sadece bilgi, analiz ve tavsiye sagla
@@ -109,7 +109,7 @@ function buildUserMessage(
   const parts: string[] = [];
 
   if (context) {
-    if (context.userName) parts.push(`Kullanici: ${context.userName}`);
+    if (context.userName) parts.push(`Kullanıcı: ${context.userName}`);
     if (context.userRole) parts.push(`Rol: ${context.userRole}`);
     if (context.currentModule) parts.push(`Aktif modul: ${context.currentModule}`);
     if (context.activeProject) parts.push(`Aktif proje: ${context.activeProject}`);
@@ -121,7 +121,7 @@ function buildUserMessage(
   // Sohbet gecmisini ekle (son mesajlar)
   if (conversationHistory && conversationHistory.length > 0) {
     const historyText = conversationHistory
-      .map(m => `${m.role === 'user' ? 'Kullanici' : 'Asistan'}: ${m.content.slice(0, 500)}`)
+      .map(m => `${m.role === 'user' ? 'Kullanıcı' : 'Asistan'}: ${m.content.slice(0, 500)}`)
       .join('\n');
     parts.push(`\n[Onceki Sohbet]\n${historyText}`);
   }
@@ -150,7 +150,7 @@ function buildProviderOrder(
     }
   };
 
-  // 1. Kullanicinin tercihi
+  // 1. Kullanıcınin tercihi
   if (preferred) addIfNew(preferred);
   // 2. Varsayilan provider
   addIfNew(defaultId);
@@ -243,7 +243,7 @@ export async function chatWithAi(req: AiChatServiceRequest): Promise<AiChatServi
     };
   }
 
-  // Kullanici mesajini context + gecmis ile birlestir
+  // Kullanıcı mesajini context + gecmis ile birlestir
   const userMessage = buildUserMessage(req.message, req.context, req.conversationHistory);
   const maxTokens = parseInt(process.env.CLAUDE_MAX_TOKENS || '1024');
 

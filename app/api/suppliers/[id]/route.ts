@@ -70,7 +70,7 @@ export async function PUT(
       },
     });
 
-    return successResponse(supplier, 'Tedarikci basariyla guncellendi');
+    return successResponse(supplier, 'Tedarikci başarıyla güncellendi');
   } catch (error) {
     console.error('Error updating supplier:', error);
     return Response.json(
@@ -98,7 +98,7 @@ export async function DELETE(
 
     await prisma.supplier.delete({ where: { id } });
 
-    return successResponse(null, 'Tedarikci basariyla silindi');
+    return successResponse(null, 'Tedarikci başarıyla silindi');
   } catch (error) {
     console.error('Error deleting supplier:', error);
     return Response.json(
