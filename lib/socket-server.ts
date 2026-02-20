@@ -291,11 +291,29 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
         const trimmedText = text.trim().substring(0, 5000);
 
         try {
+          // channelId string'e çevir (frontend integer gönderebilir)
+          const channelIdStr = String(channelId);
+
+          // Kanal DB'de var mı? — legacyId veya id ile bul
+          let channel = await prisma.channel.findFirst({
+            where: { OR: [{ legacyId: channelIdStr }, { id: channelIdStr }] },
+          });
+
+          // Kanal yoksa oluştur (legacy kanallar için)
+          if (!channel) {
+            channel = await prisma.channel.create({
+              data: { name: channelIdStr, legacyId: channelIdStr, type: 'channel' },
+            });
+          }
+
+          // Guest kullanıcı ID'lerini (guest_xxx) null olarak kaydet
+          const realUserId = userId.startsWith('guest_') ? null : userId;
+
           // DB'ye kaydet
           const message = await prisma.message.create({
             data: {
-              channelId,
-              userId,
+              channelId: channel.id,
+              userId: realUserId,
               text: trimmedText,
               time: new Date().toLocaleTimeString('tr-TR', {
                 hour: '2-digit',
@@ -307,18 +325,21 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
           const msg = {
             id: message.id,
             user: userName,
-            userId,
+            userId: realUserId,
             text: message.text,
             time: message.time,
-            channelId,
+            channelId: channelIdStr, // Frontend'in tanıdığı ID (ör. "1", "genel")
             replyTo: replyTo || null,
             reactions: {},
-            readBy: [userId],
+            readBy: [realUserId],
             createdAt: message.createdAt.toISOString(),
           };
 
-          // Tüm kanala yayınla (gönderen dahil)
-          io!.to(`channel:${channelId}`).emit('message:new', msg);
+          // Tüm kanala yayınla — hem UUID hem legacyId ile join etmiş olabilir
+          io!.to(`channel:${channel.id}`).emit('message:new', msg);
+          if (channel.id !== channelIdStr) {
+            io!.to(`channel:${channelIdStr}`).emit('message:new', msg);
+          }
         } catch (error) {
           console.error('[Socket] Message persist error:', error);
           socket.emit('error:server', { message: 'Mesaj kaydedilemedi.' });
@@ -544,13 +565,15 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
       onlineUsers.delete(userId);
       io!.emit('user:offline', { userId, name: userName });
 
-      // Update lastSeenAt in DB (non-blocking)
-      prisma.user
-        .update({
-          where: { id: userId },
-          data: { lastSeenAt: new Date() },
-        })
-        .catch(() => {});
+      // Update lastSeenAt in DB (non-blocking) — guest kullanıcılar için skip
+      if (!userId.startsWith('guest_')) {
+        prisma.user
+          .update({
+            where: { id: userId },
+            data: { lastSeenAt: new Date() },
+          })
+          .catch(() => {});
+      }
     });
   });
 
