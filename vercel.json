@@ -1,0 +1,4 @@
+{
+  "buildCommand": "prisma generate && NEXT_DISABLE_TURBOPACK=1 next build",
+  "framework": "nextjs"
+}

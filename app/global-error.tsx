@@ -1,5 +1,6 @@
 'use client';
 
+// Global error boundary - Next.js 16 için basit versiyon
 export default function GlobalError({
   reset,
 }: {
@@ -7,11 +8,17 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <html>
+    <html lang="tr">
       <body>
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'sans-serif' }}>
           <h2>Bir hata oluştu</h2>
-          <button onClick={() => reset()}>Tekrar dene</button>
+          <p>Lütfen sayfayı yenileyin.</p>
+          <button
+            style={{ padding: '0.5rem 1rem', cursor: 'pointer' }}
+            onClick={reset}
+          >
+            Tekrar dene
+          </button>
         </div>
       </body>
     </html>
