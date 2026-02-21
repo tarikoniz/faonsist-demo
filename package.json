@@ -11,7 +11,7 @@
     "postinstall": "prisma generate",
     "build": "prisma generate && next build",
     "start": "next start",
-    "start:railway": "node --max-old-space-size=512 --expose-gc node_modules/.bin/tsx server.ts",
+    "start:railway": "tsx server.ts",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",

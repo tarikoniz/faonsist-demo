@@ -118,20 +118,24 @@ app.prepare().then(() => {
     }
   }, 6 * 60 * 60 * 1000);
 
-  // ---- Periyodik Bellek Yönetimi (her 2 dakikada bir) ----
+  // ---- Agresif Bellek Yönetimi ----
+  // GC'yi düzenli tetikle — NODE_OPTIONS'da --expose-gc olmalı
+  const gcFn = typeof (global as any).gc === 'function' ? (global as any).gc as () => void : null;
+
+  // Her 30 saniyede bellek kontrol, %70+ ise GC tetikle
   setInterval(() => {
+    if (!gcFn) return;
     const mem = process.memoryUsage();
     const heapPct = Math.round((mem.heapUsed / mem.heapTotal) * 100);
-    // GC zorla — --expose-gc flag gerekli (start command'de var)
-    if (typeof (global as any).gc === 'function') {
-      if (heapPct > 75) {
-        (global as any).gc();
-        const after = process.memoryUsage();
-        const afterPct = Math.round((after.heapUsed / after.heapTotal) * 100);
-        logger.info(`GC çalıştı: %${heapPct} → %${afterPct}`, { module: 'memory' });
+    if (heapPct > 70) {
+      gcFn();
+      const after = process.memoryUsage();
+      const afterPct = Math.round((after.heapUsed / after.heapTotal) * 100);
+      if (afterPct < heapPct - 5) {
+        logger.info(`GC: %${heapPct} → %${afterPct} (${Math.round(mem.heapUsed/1024/1024)}MB → ${Math.round(after.heapUsed/1024/1024)}MB)`, { module: 'memory' });
       }
     }
-  }, 2 * 60 * 1000);
+  }, 30_000);
 
   // ---- Graceful Shutdown ----
   async function gracefulShutdown(signal: string) {
