@@ -1424,7 +1424,13 @@ export async function PUT(request: NextRequest) {
       }
     }, { timeout: 60000 }); // 60 second timeout for large data
 
-    return successResponse(null, 'Veriler başarıyla kaydedildi');
+    // Response'a güncelleme bilgisi ekle — client bunu görünce kendi socket'iyle broadcast eder
+    return successResponse({
+      broadcast: true,
+      updatedBy: user.id,
+      updatedByName: user.name,
+      timestamp: new Date().toISOString(),
+    }, 'Veriler başarıyla kaydedildi');
   } catch (error) {
     console.error('State PUT error:', error);
     return Response.json(

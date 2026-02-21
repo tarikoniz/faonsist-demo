@@ -697,6 +697,25 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
       })
     );
 
+    // ---- State Update (birisi save() yaptığında tüm kullanıcılara bildir) ----
+    socket.on(
+      'state:update',
+      withRateLimit((data: unknown) => {
+        const { updatedBy, updatedByName, timestamp } = data as {
+          updatedBy: string;
+          updatedByName: string;
+          timestamp: string;
+        };
+        // Gönderenin kendisi hariç tüm bağlı kullanıcılara yayınla
+        socket.broadcast.emit('state:updated', {
+          updatedBy,
+          updatedByName,
+          timestamp,
+        });
+        console.log(`[Socket] State güncellendi: ${updatedByName}`);
+      })
+    );
+
     // ---- Channel Created (tüm bağlı kullanıcılara yayınla) ----
     socket.on(
       'channel:created',

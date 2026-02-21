@@ -4101,6 +4101,14 @@ async function save(){
                 headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
                 body:JSON.stringify(S)
             });
+            // Kayıt başarılıysa diğer kullanıcılara Socket.IO ile bildir
+            if(socket&&socket.connected){
+                socket.emit('state:update',{
+                    updatedBy:currentUser?currentUser.id:null,
+                    updatedByName:currentUser?currentUser.name:'Bilinmiyor',
+                    timestamp:new Date().toISOString()
+                });
+            }
         }catch(e){console.warn('Backend kayit hatasi, localStorage kullaniliyor:',e);}
     }
     // Otomatik yedek: her 50 kayitta bir localStorage'a yedek versiyonu sakla
@@ -8873,6 +8881,35 @@ function initSocket(){
             renderChannels();
             showNotif('📢 Yeni kanal oluşturuldu: #'+data.channelId+' ('+data.createdBy+')');
             playNotifSound('success');
+        });
+
+        // ---- State güncellendi (başka kullanıcı save() yaptı) ----
+        let _stateReloadTimer=null;
+        socket.on('state:updated',(data)=>{
+            // Çok sık reload'ı önle — 1.5 saniyelik debounce
+            if(_stateReloadTimer)clearTimeout(_stateReloadTimer);
+            _stateReloadTimer=setTimeout(async()=>{
+                console.log('[Socket] State güncellendi, yeniden yükleniyor...', data.updatedByName);
+                await load();
+                renderAll();
+                // Mevcut kanaldaki mesajları da taze çek
+                if(S.currentChannel&&backendAvailable){
+                    const hdrs={'Content-Type':'application/json'};
+                    if(authToken)hdrs['Authorization']='Bearer '+authToken;
+                    fetch(API_BASE+'/api/messages?channelId='+encodeURIComponent(S.currentChannel),{headers:hdrs})
+                        .then(r=>r.json())
+                        .then(d=>{
+                            if(d.success&&d.data&&d.data.messages){
+                                S.messages[S.currentChannel]=d.data.messages;
+                                renderMessages();
+                            }
+                        }).catch(()=>{});
+                }
+                // Güncelleme bildirimi (çok sık olmasın diye sessizce)
+                if(data.updatedByName&&data.updatedByName!==currentUser?.name){
+                    showNotif('🔄 '+data.updatedByName+' verileri güncelledi');
+                }
+            },1500);
         });
 
     }catch(e){console.warn('[Socket] Init failed:',e);}
