@@ -8716,7 +8716,8 @@ function initSocket(){
         const socketAuth=authToken
             ?{token:authToken}
             :{userName:currentUser?currentUser.name:'Misafir'};
-        socket=io(window.location.origin,{auth:socketAuth,transports:['websocket','polling'],forceNew:true});
+        const SOCKET_SERVER='https://lavish-friendship-production.up.railway.app';
+        socket=io(SOCKET_SERVER,{auth:socketAuth,transports:['websocket','polling'],forceNew:true});
         socket.on('connect',()=>{
             console.log('[Socket] Connected:',socket.id);
             // Join current channel

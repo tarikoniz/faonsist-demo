@@ -244,12 +244,17 @@ export function getOnlineUsers(): UserPresence[] {
 
 export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
   const isProd = process.env.NODE_ENV === 'production';
-  const corsOrigin = process.env.CORS_ORIGIN || (isProd ? 'https://faonsist.com' : '*');
+  const corsOriginRaw = process.env.CORS_ORIGIN || (isProd ? 'https://faonsist.com' : '*');
+  // Virgülle ayrılmış string'i array'e çevir — Socket.IO array bekliyor
+  const corsOrigin = corsOriginRaw === '*'
+    ? '*'
+    : corsOriginRaw.split(',').map(s => s.trim()).filter(Boolean);
 
   io = new SocketIOServer(httpServer, {
     cors: {
       origin: corsOrigin,
       methods: ['GET', 'POST'],
+      credentials: true,
     },
     transports: ['websocket', 'polling'],
     pingInterval: 25000,
