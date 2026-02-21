@@ -160,11 +160,38 @@ function checkSocketRateLimit(userId: string): boolean {
   return true;
 }
 
-// Periyodik temizlik
+// Periyodik temizlik — rate limit + channel cache + eski guest kullanıcılar
 setInterval(() => {
   const now = Date.now();
+  // Rate limit temizliği
   for (const [key, entry] of socketRateLimits) {
     if (now > entry.resetAt) socketRateLimits.delete(key);
+  }
+  // Stale channel cache temizliği
+  for (const [key] of channelMemberCache) {
+    const expiry = channelCacheExpiry.get(key) ?? 0;
+    if (now > expiry + 60_000) { // TTL + 1 dakika tampon
+      channelMemberCache.delete(key);
+      channelCacheExpiry.delete(key);
+    }
+  }
+  // Bağlantısı kopmuş ghost online user temizliği
+  for (const [uid, presence] of onlineUsers) {
+    // 30 dakikadan uzun süredir güncellenmemiş kayıtları sil
+    if (now - presence.lastSeen.getTime() > 30 * 60_000) {
+      onlineUsers.delete(uid);
+    }
+  }
+  // Bellek kullanım logu (debug)
+  const mem = process.memoryUsage();
+  const heapPct = Math.round((mem.heapUsed / mem.heapTotal) * 100);
+  if (heapPct > 80) {
+    console.warn(`[Memory] Heap: %${heapPct} (${Math.round(mem.heapUsed/1024/1024)}MB / ${Math.round(mem.heapTotal/1024/1024)}MB) | onlineUsers: ${onlineUsers.size} | rateLimits: ${socketRateLimits.size} | channelCache: ${channelMemberCache.size}`);
+  }
+  // GC zorla (--expose-gc flag varsa)
+  if (typeof global.gc === 'function' && heapPct > 85) {
+    global.gc();
+    console.log('[Memory] GC tetiklendi');
   }
 }, 30_000);
 

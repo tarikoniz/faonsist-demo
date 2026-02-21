@@ -118,6 +118,21 @@ app.prepare().then(() => {
     }
   }, 6 * 60 * 60 * 1000);
 
+  // ---- Periyodik Bellek Yönetimi (her 2 dakikada bir) ----
+  setInterval(() => {
+    const mem = process.memoryUsage();
+    const heapPct = Math.round((mem.heapUsed / mem.heapTotal) * 100);
+    // GC zorla — --expose-gc flag gerekli (start command'de var)
+    if (typeof (global as any).gc === 'function') {
+      if (heapPct > 75) {
+        (global as any).gc();
+        const after = process.memoryUsage();
+        const afterPct = Math.round((after.heapUsed / after.heapTotal) * 100);
+        logger.info(`GC çalıştı: %${heapPct} → %${afterPct}`, { module: 'memory' });
+      }
+    }
+  }, 2 * 60 * 1000);
+
   // ---- Graceful Shutdown ----
   async function gracefulShutdown(signal: string) {
     logger.info(`Received ${signal}. Starting graceful shutdown...`, { module: 'shutdown' });

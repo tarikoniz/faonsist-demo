@@ -2,12 +2,16 @@
   "name": "faonsist",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "tsx server.ts",
     "dev:next": "next dev --turbopack",
     "postinstall": "prisma generate",
     "build": "prisma generate && next build",
     "start": "next start",
+    "start:railway": "node --max-old-space-size=512 --expose-gc node_modules/.bin/tsx server.ts",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "format": "prettier --write .",
