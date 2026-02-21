@@ -276,16 +276,21 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
           socket.data.userRole = payload.role;
           console.log(`[Socket] Auth OK: ${payload.name} (${payload.userId})`);
         } else {
-          // Token var ama geçersiz — hatayı logla, guest olarak devam et
-          console.warn(`[Socket] Token geçersiz, guest olarak devam: token başlangıcı=${token.substring(0,20)}`);
-          socket.data.userId = `guest_${socket.id}`;
-          socket.data.userName = socket.handshake.auth?.userName || 'Misafir';
+          // Token var ama geçersiz — hatayı logla, handshake'deki isim/id'yi kullan
+          console.warn(`[Socket] Token geçersiz, handshake verisine düşülüyor: token başlangıcı=${token.substring(0,20)}`);
+          const fallbackName = socket.handshake.auth?.userName || 'Misafir';
+          const fallbackId = socket.handshake.auth?.userId;
+          socket.data.userId = fallbackId || `guest_${socket.id}`;
+          socket.data.userName = fallbackName;
           socket.data.userRole = 'Izleyici';
+          console.log(`[Socket] Fallback kullanıcı: ${fallbackName} (${socket.data.userId})`);
         }
       } else {
-        // Token yok — guest olarak bağlan (userName'i handshake'den al)
-        socket.data.userId = `guest_${socket.id}`;
-        socket.data.userName = socket.handshake.auth?.userName || 'Misafir';
+        // Token yok — handshake'deki isim/id'yi kullan
+        const fallbackName = socket.handshake.auth?.userName || 'Misafir';
+        const fallbackId = socket.handshake.auth?.userId;
+        socket.data.userId = fallbackId || `guest_${socket.id}`;
+        socket.data.userName = fallbackName;
         socket.data.userRole = 'Izleyici';
       }
       next();

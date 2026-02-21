@@ -8721,9 +8721,12 @@ function initSocket(){
         }
         // Token varsa JWT ile bağlan — token yoksa socket başlatma (login gerekmeden bağlanınca Misafir görünüyor)
         if(!authToken&&!isLoggedIn)return;
-        const socketAuth=authToken
-            ?{token:authToken}
-            :{userName:currentUser?currentUser.name:'Misafir'};
+        // Her zaman hem token hem userName/userId gönder — token verify başarısız olsa bile isim görünsün
+        const socketAuth={
+            token:authToken||undefined,
+            userName:currentUser?currentUser.name:(authToken?undefined:'Misafir'),
+            userId:currentUser?currentUser.id:undefined
+        };
         const SOCKET_SERVER='https://lavish-friendship-production.up.railway.app';
         socket=io(SOCKET_SERVER,{auth:socketAuth,transports:['websocket','polling'],forceNew:true});
         socket.on('connect',()=>{
