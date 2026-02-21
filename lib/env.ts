@@ -60,14 +60,23 @@ export function validateEnv(): EnvConfig {
     errors.push('REFRESH_TOKEN_SECRET is required and must be at least 32 characters');
   }
 
-  // Production-specific checks
+  // Production-specific warnings (uyarı olarak logla, server'ı durdurma)
+  const warnings: string[] = [];
   if (process.env.NODE_ENV === 'production') {
     if (process.env.JWT_SECRET?.includes('change-in-production')) {
-      errors.push('JWT_SECRET contains default value — change it for production!');
+      warnings.push('JWT_SECRET varsayılan değer içeriyor — üretim için değiştirilmesi önerilir');
     }
     if (process.env.CORS_ORIGIN === '*') {
-      errors.push('CORS_ORIGIN should not be * in production');
+      warnings.push('CORS_ORIGIN üretimde * olmamalı');
     }
+  }
+
+  if (warnings.length > 0) {
+    console.warn('\n========================================');
+    console.warn('  FaOnSisT - Environment Warnings');
+    console.warn('========================================');
+    warnings.forEach(w => console.warn(`  ⚠️  ${w}`));
+    console.warn('========================================\n');
   }
 
   if (errors.length > 0) {
