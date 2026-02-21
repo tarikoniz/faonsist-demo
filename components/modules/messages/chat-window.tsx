@@ -5,7 +5,7 @@ import {
     Send, Paperclip, Smile, MoreVertical, Phone, Video,
     Search, Pin, AtSign, Hash, Users, Info, X,
     Mic, Image as ImageIcon, File, Reply, Edit, Trash2,
-    ThumbsUp, Heart, Laugh, Check, CheckCheck
+    ThumbsUp, Heart, Laugh, Check, CheckCheck, Wifi, WifiOff
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useChat } from '@/hooks/use-chat';
+import { useSocketChat } from '@/hooks/use-socket-chat';
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { ChannelType, Message } from '@/types/messages';
@@ -41,17 +42,30 @@ export function ChatWindow({ className }: ChatWindowProps) {
     const {
         activeChannel,
         activeMessages,
-        sendMessage,
         typingUsers,
         isUserOnline,
     } = useChat();
+
+    // Socket.IO gerçek zamanlı hook — Railway'e bağlanır
+    const { sendSocketMessage, startTyping, stopTyping, isConnected } = useSocketChat(
+        activeChannel?.id ?? null
+    );
 
     const [newMessage, setNewMessage] = useState('');
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const currentUserId = '1'; // Mock current user
+
+    // Auth store'dan gerçek kullanıcı ID'sini al
+    const currentUserId = typeof window !== 'undefined'
+        ? (() => {
+            try {
+                const auth = JSON.parse(localStorage.getItem('faonsist-auth') || '{}');
+                return auth?.state?.user?.id || null;
+            } catch { return null; }
+          })()
+        : null;
 
     // Auto scroll to bottom when new messages arrive
     useEffect(() => {
@@ -64,7 +78,8 @@ export function ChatWindow({ className }: ChatWindowProps) {
         e.preventDefault();
         if (!newMessage.trim()) return;
 
-        sendMessage(newMessage.trim());
+        // Socket.IO üzerinden gönder (Railway → tüm kullanıcılara anlık)
+        sendSocketMessage(newMessage.trim());
         setNewMessage('');
         inputRef.current?.focus();
     };
@@ -73,6 +88,16 @@ export function ChatWindow({ className }: ChatWindowProps) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage(e);
+        }
+    };
+
+    // Input değişince typing event'i gönder
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setNewMessage(e.target.value);
+        if (e.target.value.trim()) {
+            startTyping();
+        } else {
+            stopTyping();
         }
     };
 
@@ -92,13 +117,21 @@ export function ChatWindow({ className }: ChatWindowProps) {
         return format(date, 'dd MMMM yyyy', { locale: tr });
     };
 
+    // createdAt'i her zaman Date nesnesine çevir (socket'ten string gelebilir)
+    const safeDate = (d: any): Date => {
+        if (!d) return new Date();
+        if (d instanceof Date) return d;
+        return new Date(d);
+    };
+
     // Group messages by date
     const groupedMessages = activeMessages.reduce((groups, message, index) => {
-        const date = format(message.createdAt, 'yyyy-MM-dd');
+        const msgDate = safeDate(message.createdAt);
+        const date = format(msgDate, 'yyyy-MM-dd');
         if (!groups[date]) {
             groups[date] = [];
         }
-        groups[date].push({ ...message, index });
+        groups[date].push({ ...message, createdAt: msgDate, index });
         return groups;
     }, {} as Record<string, (Message & { index: number })[]>);
 
@@ -171,6 +204,22 @@ export function ChatWindow({ className }: ChatWindowProps) {
                         </div>
 
                         <div className="flex items-center gap-1">
+                            {/* Gerçek zamanlı bağlantı göstergesi */}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1 px-2">
+                                        {isConnected ? (
+                                            <Wifi className="h-3.5 w-3.5 text-green-500" />
+                                        ) : (
+                                            <WifiOff className="h-3.5 w-3.5 text-muted-foreground" />
+                                        )}
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {isConnected ? 'Gerçek zamanlı bağlantı aktif' : 'Bağlantı kuruluyor...'}
+                                </TooltipContent>
+                            </Tooltip>
+
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button size="icon" variant="ghost" className="h-9 w-9">
@@ -250,9 +299,9 @@ export function ChatWindow({ className }: ChatWindowProps) {
                                                     {/* Avatar */}
                                                     <div className={cn('flex-shrink-0 w-8', !showAvatar && 'invisible')}>
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${message.user?.name}`} />
+                                                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${message.user?.name || (message as any).user}`} />
                                                             <AvatarFallback className="text-xs">
-                                                                {message.user?.name.slice(0, 2).toUpperCase()}
+                                                                {(message.user?.name || (message as any).user || 'U').slice(0, 2).toUpperCase()}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                     </div>
@@ -262,7 +311,7 @@ export function ChatWindow({ className }: ChatWindowProps) {
                                                         {showAvatar && (
                                                             <div className={cn('flex items-center gap-2 mb-1', isOwnMessage && 'flex-row-reverse')}>
                                                                 <span className="text-sm font-medium text-foreground">
-                                                                    {message.user?.name}
+                                                                    {message.user?.name || (message as any).user || 'Bilinmiyor'}
                                                                 </span>
                                                                 <span className="text-[10px] text-muted-foreground">
                                                                     {formatMessageTime(message.createdAt)}
@@ -280,7 +329,7 @@ export function ChatWindow({ className }: ChatWindowProps) {
                                                                 )}
                                                             >
                                                                 <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                                                    {message.content}
+                                                                    {(message as any).text || message.content}
                                                                 </p>
                                                             </div>
 
@@ -377,8 +426,9 @@ export function ChatWindow({ className }: ChatWindowProps) {
                                         ref={inputRef}
                                         placeholder={`${activeChannel.name}'e mesaj gönder...`}
                                         value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onChange={handleInputChange}
                                         onKeyDown={handleKeyDown}
+                                        onBlur={() => stopTyping()}
                                         rows={1}
                                         className="min-h-11 max-h-32 pr-24 bg-background border-border resize-none"
                                     />

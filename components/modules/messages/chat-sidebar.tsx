@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useChat } from '@/hooks/use-chat';
+import { useChatStore } from '@/lib/store/chat';
 import { ChannelType } from '@/types/messages';
 
 interface ChatSidebarProps {
@@ -47,6 +48,20 @@ export function ChatSidebar({ className }: ChatSidebarProps) {
         totalUnreadCount,
         isUserOnline,
     } = useChat();
+
+    const { fetchChannels, fetchMessages } = useChatStore();
+
+    // Sayfa açılınca kanalları yükle
+    useEffect(() => {
+        fetchChannels();
+    }, []);
+
+    // Aktif kanal değişince mesajları yükle
+    useEffect(() => {
+        if (activeChannel?.id) {
+            fetchMessages(activeChannel.id);
+        }
+    }, [activeChannel?.id]);
 
     // Filter channels by search
     const searchedChannels = filteredChannels.filter((ch) =>

@@ -172,7 +172,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ isLoading: true, error: null });
         const res = await apiClient.get<any[]>('/api/channels');
         if (res.success) {
-            set({ channels: res.data || [], isLoading: false });
+            // DB'den gelen kanalları Channel tipine map et
+            const rawChannels: any[] = Array.isArray(res.data) ? res.data : [];
+            const mapped = rawChannels.map((ch: any) => ({
+                id: ch.id,
+                name: ch.name || ch.legacyId || 'Kanal',
+                type: (ch.type === 'dm' ? 'dm' : ch.type === 'group' ? 'group' : 'channel') as any,
+                description: ch.description || '',
+                isPrivate: ch.isPrivate || false,
+                members: ch.members || [],
+                createdBy: ch.createdBy || '',
+                createdAt: ch.createdAt ? new Date(ch.createdAt) : new Date(),
+                updatedAt: ch.updatedAt ? new Date(ch.updatedAt) : new Date(),
+                unreadCount: 0,
+            }));
+            set({ channels: mapped as any, isLoading: false });
         } else {
             set({ error: res.error?.message || 'Kanallar yüklenemedi', isLoading: false });
         }
@@ -182,8 +196,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ isLoading: true, error: null });
         const res = await apiClient.get<any[]>(`/api/channels/${channelId}/messages`);
         if (res.success) {
+            // API mesajları desc sırayla döndürüyor — asc'e çevir
+            // Ayrıca DB'deki 'text' alanını 'content'e map et
+            const rawMessages: any[] = Array.isArray(res.data) ? res.data : [];
+            const mapped: Message[] = rawMessages
+                .reverse()
+                .map((m: any): Message => ({
+                    id: m.id,
+                    channelId: m.channelId || channelId,
+                    userId: m.userId || m.user_id || '',
+                    user: m.user ? { name: m.user.name, id: m.user.id, avatar: m.user.avatar, email: '', role: 'employee' as any, status: 'online' as any, createdAt: new Date(), updatedAt: new Date() } : undefined,
+                    content: m.content || m.text || '',
+                    type: 'text' as any,
+                    createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
+                    updatedAt: m.updatedAt ? new Date(m.updatedAt) : new Date(),
+                }));
             set((state) => ({
-                messages: { ...state.messages, [channelId]: res.data || [] },
+                messages: { ...state.messages, [channelId]: mapped },
                 isLoading: false,
             }));
         } else {
