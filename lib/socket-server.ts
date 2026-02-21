@@ -337,16 +337,61 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
         const { channelId } = data as ChannelData;
         if (!channelId) return;
 
+        // Guest kullanıcılar doğrudan katılabilir
+        if (userId.startsWith('guest_')) {
+          socket.join(`channel:${channelId}`);
+          return;
+        }
+
         const isMember = await isChannelMember(channelId, userId);
         if (!isMember) {
-          socket.emit('error:forbidden', {
-            message: 'Bu kanala erişim yetkiniz yok.',
-            channelId,
-          });
+          // Üye değilse kanal DB'de var mı bak, varsa otomatik ekle (takım ortamı)
+          try {
+            const channel = await prisma.channel.findFirst({
+              where: { OR: [{ id: channelId }, { legacyId: channelId }] },
+            });
+            if (channel) {
+              // Kullanıcıyı kanala üye olarak ekle
+              await prisma.channelMember.upsert({
+                where: { channelId_userId: { channelId: channel.id, userId } },
+                update: {},
+                create: { channelId: channel.id, userId, role: 'member' },
+              }).catch(() => {}); // Zaten üyeyse hata yok
+              // Cache'i temizle
+              channelMemberCache.delete(channelId);
+              channelMemberCache.delete(channel.id);
+              socket.join(`channel:${channel.id}`);
+              if (channel.id !== channelId) {
+                socket.join(`channel:${channelId}`);
+              }
+            } else {
+              socket.emit('error:forbidden', {
+                message: 'Kanal bulunamadı.',
+                channelId,
+              });
+            }
+          } catch (err) {
+            console.error('[Socket] channel:join auto-add error:', err);
+            socket.join(`channel:${channelId}`); // Hata olsa bile join et
+          }
           return;
         }
 
         socket.join(`channel:${channelId}`);
+        // UUID ile join olurken legacyId ile de join ol (tüm emit'leri yakala)
+        try {
+          const channel = await prisma.channel.findFirst({
+            where: { OR: [{ id: channelId }, { legacyId: channelId }] },
+          });
+          if (channel && channel.id !== channelId) {
+            socket.join(`channel:${channel.id}`);
+          }
+          if (channel && channel.legacyId && channel.legacyId !== channelId) {
+            socket.join(`channel:${channel.legacyId}`);
+          }
+        } catch {
+          // ignore
+        }
       })
     );
 
@@ -502,7 +547,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
         if (!channelId) return;
         socket
           .to(`channel:${channelId}`)
-          .emit('user:typing', { userId, name: userName, channelId });
+          .emit('user:typing', { userId, name: userName, userName, channelId });
       })
     );
 
@@ -510,7 +555,7 @@ export function initializeSocket(httpServer: HTTPServer): SocketIOServer {
       if (!data.channelId) return;
       socket
         .to(`channel:${data.channelId}`)
-        .emit('user:stopped-typing', { userId, name: userName, channelId: data.channelId });
+        .emit('user:stopped-typing', { userId, name: userName, userName, channelId: data.channelId });
     });
 
     // ---- Read Receipts (with DB persistence) ----

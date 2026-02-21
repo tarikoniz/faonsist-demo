@@ -3,9 +3,16 @@ import type { NextConfig } from "next";
 const isProd = process.env.NODE_ENV === 'production';
 const allowedOrigin = process.env.CORS_ORIGIN || (isProd ? 'https://faonsist.com' : '*');
 
+const RAILWAY_SOCKET_URL = 'https://lavish-friendship-production.up.railway.app';
+
 const nextConfig: NextConfig = {
   // Standalone output for Docker deployments
   // output: 'standalone', // Vercel'de gerek yok
+
+  // Build-time env vars — NEXT_PUBLIC_ olduklarından browser bundle'a gömülür
+  env: {
+    NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL || RAILWAY_SOCKET_URL,
+  },
 
   // TypeScript ve ESLint hatalarında build durmasın (Vercel CI için)
   typescript: {

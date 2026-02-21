@@ -180,7 +180,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 type: (ch.type === 'dm' ? 'dm' : ch.type === 'group' ? 'group' : 'channel') as any,
                 description: ch.description || '',
                 isPrivate: ch.isPrivate || false,
-                members: ch.members || [],
+                // API sadece _count döndürüyor — members array'ini simüle et
+                members: Array.isArray(ch.members) ? ch.members
+                    : Array.from({ length: ch._count?.members || 0 }, (_, i) => ({
+                        userId: `member-${i}`,
+                        role: 'member',
+                        joinedAt: new Date(),
+                    })),
                 createdBy: ch.createdBy || '',
                 createdAt: ch.createdAt ? new Date(ch.createdAt) : new Date(),
                 updatedAt: ch.updatedAt ? new Date(ch.updatedAt) : new Date(),
